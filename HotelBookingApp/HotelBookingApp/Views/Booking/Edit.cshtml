@@ -1,0 +1,31 @@
+@model Booking
+@{
+    Layout = "~/Views/Shared/_Layout.cshtml";
+    ViewData["Title"] = "Edit Booking";
+}
+
+<h2>Edit Booking</h2>
+<form asp-action="Edit" method="post">
+    <input type="hidden" asp-for="Id" />
+    <div class="mb-3">
+        <label class="form-label">Room Type</label>
+        <input asp-for="RoomType" class="form-control" />
+    </div>
+    <div class="mb-3">
+        <label class="form-label">Check-In</label>
+        <input asp-for="CheckIn" class="form-control" type="date" />
+    </div>
+    <div class="mb-3">
+        <label class="form-label">Check-Out</label>
+        <input asp-for="CheckOut" class="form-control" type="date" />
+    </div>
+    <div class="mb-3">
+        <label class="form-label">Special Request</label>
+        <input asp-for="SpecialRequest" class="form-control" />
+    </div>
+    <div class="form-check mb-3">
+        <input asp-for="IsRecurring" class="form-check-input" type="checkbox" />
+        <label class="form-check-label">Recurring</label>
+    </div>
+    <button type="submit" class="btn btn-primary">Update</button>
+</form>

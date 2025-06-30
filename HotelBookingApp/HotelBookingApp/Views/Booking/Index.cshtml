@@ -1,0 +1,37 @@
+﻿@model List<Booking>
+
+@{
+    Layout = "~/Views/Shared/_Layout.cshtml";
+    ViewData["Title"] = "Bookings";
+}
+
+<h2>Bookings</h2>
+<a href="/Booking/Create">Add New Booking</a>
+<table class="table table-bordered">
+    <thead class="table-light">
+    <tr>
+        <th>Room Type</th>
+        <th>Check-In</th>
+        <th>Check-Out</th>
+        <th>Special Request</th>
+        <th>Recurring</th>
+        <th>Actions</th>
+    </tr>
+    </thead>
+    <tbody>
+    @foreach (var item in Model)
+    {
+        <tr>
+            <td>@item.RoomType</td>
+            <td>@item.CheckIn.ToShortDateString()</td>
+            <td>@item.CheckOut.ToShortDateString()</td>
+            <td>@item.SpecialRequest</td>
+            <td>@item.IsRecurring</td>
+            <td>
+                <a class="btn btn-sm btn-outline-primary" href="/Booking/Edit/@item.Id">Edit</a>
+                <a class="btn btn-sm btn-outline-danger" href="/Booking/Delete/@item.Id">Delete</a>
+            </td>
+        </tr>
+    }
+    </tbody>
+</table>
