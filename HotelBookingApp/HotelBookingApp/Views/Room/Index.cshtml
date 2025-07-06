@@ -1,0 +1,42 @@
+@model List<Room>
+
+@{
+    Layout = "~/Views/Shared/_Layout.cshtml";
+    ViewData["Title"] = "Rooms";
+}
+
+<div class="d-flex justify-content-between align-items-center mb-5 mt-5">
+    <h2 class="mb-0">Rooms</h2>
+    <a href="/Room/Create" class="btn btn-primary">
+        <span class="material-symbols-outlined align-middle" style="font-size:20px;vertical-align:middle;">add</span>
+        <span class="align-middle">Add New Room</span>
+    </a>
+</div>
+<table class="table table-bordered">
+    <thead class="table-light">
+    <tr>
+        <th>Room Type</th>
+        <th>Price</th>
+        <th>Status</th>
+        <th>Actions</th>
+    </tr>
+    </thead>
+    <tbody>
+    @foreach (var room in Model)
+    {
+        <tr>
+            <td>@room.Type</td>
+            <td>@room.Price.ToString("C")</td>
+            <td>
+                <span class="badge @(room.IsAvailable ? "bg-success" : "bg-danger")">
+                    @(room.IsAvailable ? "Available" : "Not Available")
+                </span>
+            </td>
+            <td>
+                <a class="btn btn-sm btn-outline-primary" href="/Room/Edit/@room.Id">Edit</a>
+                <a class="btn btn-sm btn-outline-danger" href="/Room/Delete/@room.Id">Delete</a>
+            </td>
+        </tr>
+    }
+    </tbody>
+</table>

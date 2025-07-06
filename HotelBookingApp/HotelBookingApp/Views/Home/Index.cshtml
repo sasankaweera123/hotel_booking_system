@@ -1,0 +1,68 @@
+@{
+    Layout = "~/Views/Shared/_Layout.cshtml";
+    ViewData["Title"] = "Home Page";
+}
+
+<div class="container mt-5">
+    <div class="row g-4 justify-content-center align-content-center" style="height: 65vh;">
+        <!-- Booking Card -->
+        <div class="col-md-4">
+            <form method="get" action="@Url.Action("Index", "Booking")">
+                <button type="submit" class="dashboard-button">
+                    <span class="material-symbols-outlined card-icon">
+                        calendar_add_on
+                    </span>
+                    <h5 class="card-title">Booking</h5>
+                    <p class="card-text">View and manage bookings.</p>
+                </button>
+            </form>
+        </div>
+
+        <!-- Room Button Card -->
+        <div class="col-md-4">
+            <form method="get" action="@Url.Action("Index", "Room")">
+                <button type="submit" class="dashboard-button">
+                    <span class="material-symbols-outlined card-icon">
+                        bed
+                    </span>
+                    <h5 class="card-title">Room</h5>
+                    <p class="card-text">Manage room details and availability.</p>
+                </button>
+            </form>
+        </div>
+
+        <!-- Weekly Report Button Card -->
+        <div class="col-md-4">
+            <form method="get" action="@Url.Action("Index", "Report")">
+                <button type="submit" class="dashboard-button">
+                    <span class="material-symbols-outlined card-icon">
+                        finance_mode
+                    </span>
+                    <h5 class="card-title">Weekly Report</h5>
+                    <p class="card-text">Check weekly performance and stats.</p>
+                </button>
+            </form>
+        </div>
+    </div>
+</div>
+
+
+<!-- Floating chat button -->
+<button id="chatFab" class="btn btn-primary rounded-circle" style="position:fixed;bottom:30px;right:30px;width:60px;height:60px;z-index:1000;">
+    <span class="material-symbols-outlined">
+        smart_toy
+    </span>
+</button>
+
+<!-- Chat popup window -->
+<div id="chatPopup" class="card shadow" style="display:none;position:fixed;bottom:100px;right:30px;width:320px;z-index:1001;">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <span>Ask our assistant</span>
+        <button type="button" class="btn-close" aria-label="Close" id="closeChatPopup"></button>
+    </div>
+    <div class="card-body">
+        <div id="chatResponse" class="alert alert-info mb-2" style="display:none;"></div>
+        <input type="text" id="chatInput" placeholder="Ask about availability or pricing..." class="form-control mb-2" />
+        <button id="chatSubmit" class="btn btn-primary w-100">Ask</button>
+    </div>
+</div>

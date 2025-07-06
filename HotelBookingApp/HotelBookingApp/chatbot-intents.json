@@ -1,0 +1,59 @@
+[
+  {
+    "Intent": "predict_availability",
+    "Patterns": [
+      "availability",
+      "room availability",
+      "are there rooms next week",
+      "can I book next week",
+      "do you have free rooms",
+      "will rooms be available",
+      "vacant rooms",
+      "availability prediction"
+    ],
+    "Response": "Checking room availability trends for next week..."
+  },
+  {
+    "Intent": "predict_pricing",
+    "Patterns": [
+      "price prediction",
+      "pricing trend",
+      "how much will it cost",
+      "will prices go up",
+      "room cost next month",
+      "is it expensive next month",
+      "room pricing forecast",
+      "average room price"
+    ],
+    "Response": "Let me check future pricing trends for you..."
+  },
+  {
+    "Intent": "greeting",
+    "Patterns": [
+      "hi",
+      "hello",
+      "hey",
+      "good morning",
+      "good evening",
+      "good afternoon"
+    ],
+    "Response": "Hello! I'm your booking assistant. You can ask me about future room availability or prices."
+  },
+  {
+    "Intent": "goodbye",
+    "Patterns": [
+      "bye",
+      "goodbye",
+      "see you",
+      "exit",
+      "thank you",
+      "thanks"
+    ],
+    "Response": "You're welcome! Have a great day 😊"
+  },
+  {
+    "Intent": "fallback",
+    "Patterns": [],
+    "Response": "Sorry, I didn't understand that. Can you rephrase your question?"
+  }
+]

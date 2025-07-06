@@ -3,11 +3,11 @@ using HotelBookingApp.Services;
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
-// Add services to the container
 builder.Services.AddControllersWithViews();
 builder.Services.AddSingleton<BookingService>();
 builder.Services.AddSingleton<RoomService>();
 builder.Services.AddSingleton<RequestService>();
+builder.Services.AddSingleton<ReportService>();
 
 var app = builder.Build();
 
@@ -28,7 +28,7 @@ app.MapStaticAssets();
 
 app.MapControllerRoute(
     name: "default",
-    pattern: "{controller=Booking}/{action=Index}/{id?}");
+    pattern: "{controller=Home}/{action=Index}/{id?}");
 
 
 app.Run();

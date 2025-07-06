@@ -1,0 +1,14 @@
+@model Room
+
+@{
+    Layout = "~/Views/Shared/_Layout.cshtml";
+    ViewData["Title"] = "Delete Room";
+}
+
+<h2>Delete Room</h2>
+<form asp-action="Delete" method="post">
+    <input type="hidden" asp-for="Id" />
+    <p>Are you sure you want to delete the room of type <strong>@Model.Type</strong>?</p>
+    <button type="submit" class="btn btn-danger">Yes, delete</button>
+    <a href="/Room" class="btn btn-secondary">Cancel</a>
+</form>

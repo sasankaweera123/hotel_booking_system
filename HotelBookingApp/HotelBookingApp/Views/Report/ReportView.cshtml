@@ -1,0 +1,34 @@
+@model List<Report>
+
+@{
+    Layout = "~/Views/Shared/_Layout.cshtml";
+    ViewData["Title"] = "Report Results";
+}
+
+<h2 class="mb-4">Report Results</h2>
+
+<div class="table-responsive">
+    <table class="table table-bordered table-striped align-middle">
+        <thead class="table-dark">
+        <tr>
+            <th>Date</th>
+            <th>Total Bookings</th>
+            <th>Total Rooms Booked</th>
+            <th>Total Revenue</th>
+            <th>Comments</th>
+        </tr>
+        </thead>
+        <tbody>
+        @foreach (var report in Model)
+        {
+            <tr>
+                <td>@report.StartDate.ToShortDateString()</td>
+                <td>@report.TotalBookings</td>
+                <td>@report.TotalRoomsBooked</td>
+                <td>@report.TotalRevenue.ToString("C")</td>
+                <td>@report.Comments</td>
+            </tr>
+        }
+        </tbody>
+    </table>
+</div>

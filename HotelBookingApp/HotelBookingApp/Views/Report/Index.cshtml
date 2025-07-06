@@ -1,0 +1,26 @@
+@{
+    Layout = "~/Views/Shared/_Layout.cshtml";
+    ViewData["Title"] = "Generate Report";
+}
+
+<h2>Generate Report</h2>
+
+<form method="post" asp-action="Generate" class="mt-4">
+    <div class="mb-3 row">
+        <label for="fromDate" class="col-sm-2 col-form-label">From Date:</label>
+        <div class="col-sm-4">
+            <input type="date" class="form-control" id="fromDate" name="fromDate" required />
+        </div>
+    </div>
+    <div class="mb-3 row">
+        <label for="toDate" class="col-sm-2 col-form-label">To Date:</label>
+        <div class="col-sm-4">
+            <input type="date" class="form-control" id="toDate" name="toDate" required />
+        </div>
+    </div>
+    <div class="mb-3 row">
+        <div class="col-sm-6">
+            <button type="submit" class="btn btn-primary w-100">Generate Report</button>
+        </div>
+    </div>
+</form>

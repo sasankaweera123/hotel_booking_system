@@ -1,3 +1,4 @@
+@using HotelBookingApp.Models.Utils
 @model Booking
 @{
     Layout = "~/Views/Shared/_Layout.cshtml";
@@ -6,25 +7,63 @@
 
 <h2>Edit Booking</h2>
 <form asp-action="Edit" method="post">
-    <input type="hidden" asp-for="Id" />
+    <input type="hidden" asp-for="Id"/>
+    <div class="mb-3">
+        <label class="form-label">Customer Name</label>
+        <input asp-for="CustomerName" class="form-control"/>
+    </div>
+    <div class="mb-3">
+        <label class="form-label">Customer NIC</label>
+        <input asp-for="CustomerNIC" class="form-control"/>
+    </div>
+    <div class="mb-3">
+        <label class="form-label">Number of Guests</label>
+        <input asp-for="NumberOfGuests" class="form-control" type="number" min="1"/>
+    </div>
     <div class="mb-3">
         <label class="form-label">Room Type</label>
-        <input asp-for="RoomType" class="form-control" />
+        <div class="chip-group">
+            <label class="form-label">Room Types</label>
+            <div class="mb-2">
+                <select id="roomTypeSelect" class="form-select">
+                    <option value="">Select Room Type</option>
+                    @foreach (var roomType in Enum.GetValues(typeof(RoomType)))
+                    {
+                        <option value="@roomType">@roomType</option>
+                    }
+                </select>
+                <button type="button" class="btn btn-secondary ms-2" onclick="addRoomType()">Add</button>
+            </div>
+            <div class="chip-group" id="roomTypeChips">
+                @foreach (var roomType in Model.RoomTypes)
+                {
+                    <span class="chip">
+                    @roomType
+                        <button type="button" class="btn-close ms-1" aria-label="Remove"
+                                onclick="removeRoomType('@roomType')"></button>
+                </span>
+                }
+            </div>
+            @for (int i = 0; i < Model.RoomTypes.Count; i++)
+            {
+                <input type="hidden" name="RoomTypes[@i]" value="@Model.RoomTypes[i]"/>
+            }
+        </div>
     </div>
     <div class="mb-3">
         <label class="form-label">Check-In</label>
-        <input asp-for="CheckIn" class="form-control" type="date" />
+        <input asp-for="CheckIn" class="form-control" type="date"/>
     </div>
     <div class="mb-3">
         <label class="form-label">Check-Out</label>
-        <input asp-for="CheckOut" class="form-control" type="date" />
+        <input asp-for="CheckOut" class="form-control" type="date"/>
     </div>
     <div class="mb-3">
         <label class="form-label">Special Request</label>
-        <input asp-for="SpecialRequest" class="form-control" />
+        <input asp-for="SpecialRequest" class="form-control"/>
     </div>
     <div class="form-check mb-3">
-        <input asp-for="IsRecurring" class="form-check-input" type="checkbox" />
+        <input asp-for="IsRecurring" class="form-check-input" type="checkbox"/>
         <label class="form-check-label">Recurring</label>
     </div>
     <button type="submit" class="btn btn-primary">Update</button>

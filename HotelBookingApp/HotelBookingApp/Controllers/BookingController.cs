@@ -4,46 +4,31 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace HotelBookingApp.Controllers;
 
-public class BookingController : Controller
+public class BookingController(BookingService bookingService) : Controller
 {
-    private readonly BookingService _bookingService;
-    private readonly RequestService _requestService;
-
-    public BookingController(BookingService bookingService, RequestService requestService)
-    {
-        _bookingService = bookingService;
-        _requestService = requestService;
-    }
-
-    public IActionResult Index() => View(_bookingService.GetAll());
+    public IActionResult Index() => View(bookingService.GetAll());
 
     public IActionResult Create() => View();
+
     [HttpPost]
-    public IActionResult Create(Booking booking) { _bookingService.Add(booking); return RedirectToAction("Index"); }
-
-    public IActionResult Edit(int id) => View(_bookingService.GetById(id));
-    [HttpPost]
-    public IActionResult Edit(Booking booking) { _bookingService.Update(booking); return RedirectToAction("Index"); }
-
-    public IActionResult Delete(int id) => View(_bookingService.GetById(id));
-    [HttpPost, ActionName("Delete")]
-    public IActionResult DeleteConfirmed(int id) { _bookingService.Delete(id); return RedirectToAction("Index"); }
-
-    public IActionResult WeeklyReport()
+    public IActionResult Create(Booking booking)
     {
-        var bookings = _bookingService.GetAll();
-        var requests = _requestService.GetAll();
-
-        var result = bookings
-            .GroupBy(b => b.CheckIn.DayOfWeek)
-            .ToDictionary(g => g.Key.ToString(), g => new
-            {
-                Bookings = g.ToList(),
-                Requests = requests.Where(r => r.Date.DayOfWeek == g.Key).ToList()
-            });
-
-        return View(result);
+        var bookingId = bookingService.Add(booking); 
+        if(bookingId > 0) return RedirectToAction("Index");
+        else
+        {
+            ViewBag.Alert = "Booking creation failed. Room might not be available or invalid data provided.";
+            return View(booking);
+        }
     }
+
+    public IActionResult Edit(int id) => View(bookingService.GetById(id));
+    [HttpPost]
+    public IActionResult Edit(Booking booking) { bookingService.Update(booking); return RedirectToAction("Index"); }
+
+    public IActionResult Delete(int id) => View(bookingService.GetById(id));
+    [HttpPost, ActionName("Delete")]
+    public IActionResult DeleteConfirmed(int id) { bookingService.Delete(id); return RedirectToAction("Index"); }
 
     [HttpPost]
     public JsonResult Predict(string userMessage)

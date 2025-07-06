@@ -5,12 +5,20 @@
     ViewData["Title"] = "Bookings";
 }
 
-<h2>Bookings</h2>
-<a href="/Booking/Create">Add New Booking</a>
+<div class="d-flex justify-content-between align-items-center mb-5 mt-5">
+    <h2 class="mb-0">Bookings</h2>
+    <a href="/Booking/Create" class="btn btn-primary">
+        <span class="material-symbols-outlined align-middle" style="font-size:20px;vertical-align:middle;">add</span>
+        <span class="align-middle">Add New Booking</span>
+    </a>
+</div>
 <table class="table table-bordered">
     <thead class="table-light">
     <tr>
-        <th>Room Type</th>
+        <th>Customer Name</th>
+        <th>Customer NIC</th>
+        <th>Guest Count</th>
+        <th>Room Types</th>
         <th>Check-In</th>
         <th>Check-Out</th>
         <th>Special Request</th>
@@ -22,7 +30,15 @@
     @foreach (var item in Model)
     {
         <tr>
-            <td>@item.RoomType</td>
+            <td>@item.CustomerName</td>
+            <td>@item.CustomerNIC</td>
+            <td>@item.NumberOfGuests</td>
+            <td>
+                @foreach (var roomType in item.RoomTypes)
+                {
+                    <span class="badge bg-secondary">@roomType</span>
+                }
+            </td>
             <td>@item.CheckIn.ToShortDateString()</td>
             <td>@item.CheckOut.ToShortDateString()</td>
             <td>@item.SpecialRequest</td>
@@ -35,3 +51,26 @@
     }
     </tbody>
 </table>
+
+
+<!-- Floating chat button -->
+<button id="chatFab" class="btn btn-primary rounded-circle"
+        style="position:fixed;bottom:30px;right:30px;width:60px;height:60px;z-index:1000;">
+    <span class="material-symbols-outlined">
+        smart_toy
+    </span>
+</button>
+
+<!-- Chat popup window -->
+<div id="chatPopup" class="card shadow"
+     style="display:none;position:fixed;bottom:100px;right:30px;width:320px;z-index:1001;">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <span>Ask our assistant</span>
+        <button type="button" class="btn-close" aria-label="Close" id="closeChatPopup"></button>
+    </div>
+    <div class="card-body">
+        <div id="chatResponse" class="alert alert-info mb-2" style="display:none;"></div>
+        <input type="text" id="chatInput" placeholder="Ask about availability or pricing..." class="form-control mb-2"/>
+        <button id="chatSubmit" class="btn btn-primary w-100">Ask</button>
+    </div>
+</div>
