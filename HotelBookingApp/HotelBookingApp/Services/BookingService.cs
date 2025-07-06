@@ -15,7 +15,7 @@ public class BookingService
         {
             Id = 1,
             CustomerName = "Naruto Uzumaki",
-            CustomerNIC = "123456789V",
+            CustomerNic = "123456789V",
             CheckIn = DateTime.Today,
             CheckOut = DateTime.Today.AddDays(2),
             NumberOfGuests = 2,
@@ -28,7 +28,7 @@ public class BookingService
         {
             Id = 2,
             CustomerName = "Sakura Haruno",
-            CustomerNIC = "987654321V",
+            CustomerNic = "987654321V",
             CheckIn = DateTime.Today.AddDays(3),
             CheckOut = DateTime.Today.AddDays(5),
             NumberOfGuests = 10,
@@ -41,7 +41,7 @@ public class BookingService
         {
             Id = 3,
             CustomerName = "Sasuke Uchiha",
-            CustomerNIC = "456789123V",
+            CustomerNic = "456789123V",
             CheckIn = DateTime.Today.AddDays(7),
             CheckOut = DateTime.Today.AddDays(10),
             NumberOfGuests = 1,

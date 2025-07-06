@@ -33,10 +33,10 @@ public class BookingController(BookingService bookingService) : Controller
     [HttpPost]
     public JsonResult Predict(string userMessage)
     {
-        string response = userMessage.ToLower() switch
+        var response = userMessage.ToLower() switch
         {
-            string s when s.Contains("availability") => "Rooms are usually available on weekdays.",
-            string s when s.Contains("price") => "Prices tend to rise on weekends due to high demand.",
+            var s when s.Contains("availability") => "Rooms are usually available on weekdays.",
+            var s when s.Contains("price") => "Prices tend to rise on weekends due to high demand.",
             _ => "I'm sorry, I can't process that request."
         };
         return Json(new { reply = response });

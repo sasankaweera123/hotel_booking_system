@@ -5,12 +5,12 @@ namespace HotelBookingApp.Models;
 public class Booking
 {
     public int Id { get; set; }
-    public String CustomerName { get; set; }
-    public String CustomerNIC { get; set; }
+    public string? CustomerName { get; set; }
+    public string? CustomerNic { get; set; }
     public DateTime CheckIn { get; set; }
     public DateTime CheckOut { get; set; }
     public int NumberOfGuests { get; set; }
-    public List<RoomType> RoomTypes { get; set; } = new();
+    public required List<RoomType> RoomTypes { get; set; } = [];
     public string? SpecialRequest { get; set; }
     public bool IsRecurring { get; set; }
 }
