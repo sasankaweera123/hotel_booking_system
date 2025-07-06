@@ -55,5 +55,27 @@
     "Intent": "fallback",
     "Patterns": [],
     "Response": "Sorry, I didn't understand that. Can you rephrase your question?"
+  }, 
+  {
+    "Intent": "help",
+    "Patterns": [
+    "help",
+    "assist me",
+    "what can you do",
+    "features",
+    "capabilities"
+    ],
+    "Response": "I can help you check room availability and pricing trends for future dates. Just ask me!"
+    },
+  {
+    "Intent": "thank_you",
+    "Patterns": [
+      "thank you",
+      "thanks",
+      "appreciate it",
+      "grateful",
+      "much appreciated"
+    ],
+    "Response": "You're welcome! If you have any more questions, feel free to ask."
   }
 ]
