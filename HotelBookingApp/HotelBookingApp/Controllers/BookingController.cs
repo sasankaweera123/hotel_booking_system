@@ -13,6 +13,19 @@ public class BookingController(BookingService bookingService) : Controller
     [HttpPost]
     public IActionResult Create(Booking booking)
     {
+        Console.WriteLine($"Creating booking for {booking}");
+        
+        if(booking.RoomTypes.Count <= 0)
+        {
+            ViewBag.Alert = "Invalid room selected. Please choose a valid room.";
+            return View(booking);
+        }
+        if(booking.CheckIn >= booking.CheckOut)
+        {
+            ViewBag.Alert = "Check-out date must be after check-in date.";
+            return View(booking);
+        }
+        
         var bookingId = bookingService.Add(booking); 
         if(bookingId > 0) return RedirectToAction("Index");
         else
@@ -23,22 +36,34 @@ public class BookingController(BookingService bookingService) : Controller
     }
 
     public IActionResult Edit(int id) => View(bookingService.GetById(id));
+
     [HttpPost]
-    public IActionResult Edit(Booking booking) { bookingService.Update(booking); return RedirectToAction("Index"); }
+    public IActionResult Edit(Booking booking)
+    {
+        
+        if (!ModelState.IsValid)
+        {
+            ViewBag.Alert = "Invalid booking data. Please check your input.";
+            return View(booking);
+        }
+        
+        if (booking.RoomTypes.Count <= 0)
+        {
+            ViewBag.Alert = "Invalid room selected. Please choose a valid room.";
+            return View(booking);
+        }
+        
+        if (booking.CheckIn >= booking.CheckOut)
+        {
+            ViewBag.Alert = "Check-out date must be after check-in date.";
+            return View(booking);
+        }
+        
+        bookingService.Update(booking); 
+        return RedirectToAction("Index");
+    }
 
     public IActionResult Delete(int id) => View(bookingService.GetById(id));
     [HttpPost, ActionName("Delete")]
     public IActionResult DeleteConfirmed(int id) { bookingService.Delete(id); return RedirectToAction("Index"); }
-
-    [HttpPost]
-    public JsonResult Predict(string userMessage)
-    {
-        var response = userMessage.ToLower() switch
-        {
-            var s when s.Contains("availability") => "Rooms are usually available on weekdays.",
-            var s when s.Contains("price") => "Prices tend to rise on weekends due to high demand.",
-            _ => "I'm sorry, I can't process that request."
-        };
-        return Json(new { reply = response });
-    }
 }

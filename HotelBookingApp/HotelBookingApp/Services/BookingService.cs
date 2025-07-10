@@ -19,7 +19,7 @@ public class BookingService
             CheckIn = DateTime.Today,
             CheckOut = DateTime.Today.AddDays(2),
             NumberOfGuests = 2,
-            RoomTypes = [RoomType.DOUBLE],
+            RoomTypes = [new BookingRoomType { Id = 1, RoomType = RoomType.SUITE }],
             SpecialRequest = "Late check-in",
             IsRecurring = false
         });
@@ -32,7 +32,10 @@ public class BookingService
             CheckIn = DateTime.Today.AddDays(3),
             CheckOut = DateTime.Today.AddDays(5),
             NumberOfGuests = 10,
-            RoomTypes = [RoomType.SUITE, RoomType.DOUBLE],
+            RoomTypes = [
+                new BookingRoomType { Id = 2, RoomType = RoomType.SUITE },
+                new BookingRoomType { Id = 3, RoomType = RoomType.DOUBLE }
+            ],
             SpecialRequest = "Ocean view",
             IsRecurring = true
         });
@@ -45,7 +48,9 @@ public class BookingService
             CheckIn = DateTime.Today.AddDays(7),
             CheckOut = DateTime.Today.AddDays(10),
             NumberOfGuests = 1,
-            RoomTypes = [RoomType.SINGLE],
+            RoomTypes = [
+                new BookingRoomType { Id = 4, RoomType = RoomType.SINGLE },
+            ],
             SpecialRequest = "Extra pillows",
             IsRecurring = false
         });
@@ -56,49 +61,75 @@ public class BookingService
 
     public int Add(Booking booking)
     {
-        // Check if all requested room types are available
-        var availableRooms = _roomService.GetAll()
-            .Where(r => booking.RoomTypes.Contains(r.Type) && r.IsAvailable)
-            .ToList();
+        var requiredRoomGroups = booking.RoomTypes
+            .GroupBy(rt => rt.RoomType)
+            .ToDictionary(g => g.Key, g => g.Count());
 
-        if (availableRooms.Count == booking.RoomTypes.Count)
+        var roomsToReserve = new List<Room>();
+
+        foreach (var roomType in requiredRoomGroups.Keys)
         {
-            booking.Id = _bookings.Count + 1;
-            _bookings.Add(booking);
+            var availableRooms = _roomService.GetAvailableRooms(roomType)
+                                             .Where(r => r.IsAvailable)
+                                             .Take(requiredRoomGroups[roomType])
+                                             .ToList();
 
-            // Reserve each room
+            if (availableRooms.Count < requiredRoomGroups[roomType])
+            {
+                return 0;
+            }
+
+            roomsToReserve.AddRange(availableRooms);
+
             foreach (var room in availableRooms)
             {
-                room.IsAvailable = false;
-                _roomService.Update(room);
-            }
-
-            if (!string.IsNullOrWhiteSpace(booking.SpecialRequest))
-            {
-                _requestService.Add(new SpecialRequest
+                // Update the corresponding BookingRoomType to use the reserved room ID
+                var bookingRoom = booking.RoomTypes
+                    .FirstOrDefault(br => br.RoomType == room.Type && br.Id == 0); // Match unassigned ones
+                if (bookingRoom != null)
                 {
-                    Id = _requestService.GetAll().Count + 1,
-                    BookingId = booking.Id,
-                    Request = booking.SpecialRequest,
-                    Date = booking.CheckIn
-                });
+                    bookingRoom.Id = room.Id;
+                }
             }
 
-            return booking.Id;
         }
-        else
+        
+        booking.Id = _bookings.Count + 1;
+        _bookings.Add(booking);
+
+        foreach (var room in roomsToReserve)
         {
-            return 0;
+            room.IsAvailable = false;
+            _roomService.Update(room);
         }
+
+        if (!string.IsNullOrWhiteSpace(booking.SpecialRequest))
+        {
+            _requestService.Add(new SpecialRequest
+            {
+                Id = _requestService.GetAll().Count + 1,
+                BookingId = booking.Id,
+                Request = booking.SpecialRequest,
+                Date = booking.CheckIn
+            });
+        }
+
+        return booking.Id;
+        
     }
 
     public void Update(Booking booking)
     {
         // Remove the old booking
         Delete(booking.Id);
+        
+        if (booking.CheckIn >= booking.CheckOut || booking.RoomTypes.Count == 0)
+        {
+            return;
+        }
 
         // Add the updated booking
-        _bookings.Add(booking);
+        Add(booking);
 
         // Update special requests
         var existingRequests = _requestService.GetByBookingId(booking.Id);
@@ -122,25 +153,27 @@ public class BookingService
     public void Delete(int id)
     {
         var booking = _bookings.FirstOrDefault(b => b.Id == id);
+        
         if (booking == null) return;
-
-        _bookings.RemoveAll(b => b.Id == id);
+        
         var requests = _requestService.GetByBookingId(id);
 
         foreach (var request in requests)
         {
             _requestService.Delete(request.Id);
         }
-
-        // Release all rooms associated with this booking
-        var rooms = _roomService.GetAll()
-            .Where(r => booking.RoomTypes.Contains(r.Type))
-            .ToList();
+        
+        var roomIds = booking.RoomTypes.Select(rt => rt.Id).ToList();
+        
+        var rooms = _roomService.GetAll().Where(r => roomIds.Contains(r.Id)).ToList();
+        Console.WriteLine($"Rooms found: {string.Join(", ", rooms.Select(r => $"Id={r.Id}, Type={r.Type}, Available={r.IsAvailable}"))}");
+        
 
         foreach (var room in rooms)
         {
-            room.IsAvailable = true;
-            _roomService.Update(room);
+            _roomService.UpdateAvailability(room.Id, true);
         }
+        
+        _bookings.RemoveAll(b => b.Id == id);
     }
 }

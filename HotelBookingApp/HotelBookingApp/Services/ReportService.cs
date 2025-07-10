@@ -43,16 +43,7 @@ public class ReportService
             var totalRoomsBooked = bookingsForDay.Sum(b => b.RoomTypes?.Count ?? 0);
             var totalRevenue = bookingsForDay.Sum(b =>
             {
-                decimal bookingRevenue = 0;
-                if (b.RoomTypes != null)
-                {
-                    foreach (var bookedRoomType in b.RoomTypes)
-                    {
-                        var room = allRooms.FirstOrDefault(r => r.Type == bookedRoomType);
-                        bookingRevenue += room?.Price ?? 0;
-                    }
-                }
-                return bookingRevenue;
+                return b.RoomTypes.Select(bookedRoomType => allRooms.FirstOrDefault(r => r.Type == bookedRoomType.RoomType)).Select(room => room?.Price ?? 0).Sum();
             });
 
             reports.Add(new Report

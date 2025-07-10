@@ -35,18 +35,20 @@
                 <button type="button" class="btn btn-secondary ms-2" onclick="addRoomType()">Add</button>
             </div>
             <div class="chip-group" id="roomTypeChips">
-                @foreach (var roomType in Model.RoomTypes)
+                @for (int i = 0; i < Model.RoomTypes.Count; i++)
                 {
-                    <span class="chip">
-                    @roomType
+                    <span class="chip" id="chip-@i">
+                        @Model.RoomTypes[i].RoomType
                         <button type="button" class="btn-close ms-1" aria-label="Remove"
-                                onclick="removeRoomType('@roomType')"></button>
-                </span>
+                                onclick="removeRoomType(@i)"></button>
+                    </span>
                 }
+
             </div>
             @for (int i = 0; i < Model.RoomTypes.Count; i++)
             {
-                <input type="hidden" name="RoomTypes[@i]" value="@Model.RoomTypes[i]"/>
+                <input type="hidden" name="RoomTypes[@i].Id" value="@Model.RoomTypes[i].Id"/>
+                <input type="hidden" name="RoomTypes[@i].RoomType" value="@Model.RoomTypes[i].RoomType"/>
             }
         </div>
     </div>
@@ -68,3 +70,42 @@
     </div>
     <button type="submit" class="btn btn-primary">Update</button>
 </form>
+
+<script>
+let roomTypeIndex = @Model.RoomTypes.Count;
+
+function addRoomType() {
+    const select = document.getElementById('roomTypeSelect');
+    const selectedValue = select.value;
+    if (!selectedValue) return;
+
+    // Add chip
+    const chip = document.createElement('span');
+    chip.className = 'chip';
+    chip.id = `chip-${roomTypeIndex}`;
+    chip.innerHTML = `${selectedValue} <button type="button" class="btn-close ms-1" aria-label="Remove" onclick="removeRoomType(${roomTypeIndex})"></button>`;
+    document.getElementById('roomTypeChips').appendChild(chip);
+
+    // Add hidden inputs
+    const container = document.querySelector('form');
+    const inputId = document.createElement('input');
+    inputId.type = 'hidden';
+    inputId.name = `RoomTypes[${roomTypeIndex}].Id`;
+    inputId.value = 0; // Default to 0, or whatever logic you use
+    container.appendChild(inputId);
+
+    const inputType = document.createElement('input');
+    inputType.type = 'hidden';
+    inputType.name = `RoomTypes[${roomTypeIndex}].RoomType`;
+    inputType.value = selectedValue;
+    container.appendChild(inputType);
+
+    roomTypeIndex++;
+}
+
+function removeRoomType(index) {
+    document.getElementById(`chip-${index}`)?.remove();
+    document.querySelector(`input[name="RoomTypes[${index}].Id"]`)?.remove();
+    document.querySelector(`input[name="RoomTypes[${index}].RoomType"]`)?.remove();
+}
+</script>

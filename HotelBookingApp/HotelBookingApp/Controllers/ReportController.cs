@@ -10,6 +10,11 @@ public class ReportController(ReportService reportService) : Controller
     [HttpPost]
     public IActionResult Generate(DateTime fromDate, DateTime toDate)
     {
+        if (fromDate > toDate)
+        {
+            ViewBag.Alert = "From date must be earlier than to date.";
+            return View("Index");
+        }
         var reports = reportService.GenerateReports(fromDate, toDate);
         return View("ReportView", reports);
     }

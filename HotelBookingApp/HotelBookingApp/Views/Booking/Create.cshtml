@@ -34,12 +34,16 @@ ViewData["Title"] = "Create Booking";
         <input asp-for="CustomerNic" class="form-control"/>
     </div>
     <div class="mb-3">
+        <label class="form-label">Number of Guests</label>
+    <input asp-for="NumberOfGuests" class="form-control" type="number" min="1"/>
+    </div>
+    <div class="mb-3">
         <label class="form-label">Room Types</label>
         <select asp-for="RoomTypes" class="form-control" asp-items="Html.GetEnumSelectList<RoomType>()" id="RoomTypes"
                 multiple style="display:none;"></select>
         <div id="roomTypeChips" class="mb-2"></div>
         <button type="button" class="btn btn-secondary btn-sm" onclick="showRoomTypeSelector()">Add Room Type</button>
-        <input type="hidden" name="RoomTypesWithCounts" id="RoomTypesWithCounts" />
+        <input type="hidden" name="RoomTypesWithCounts" id="RoomTypesWithCounts"/>
     </div>
     <div class="mb-3">
         <label class="form-label">Check-In</label>
@@ -60,93 +64,14 @@ ViewData["Title"] = "Create Booking";
     <button type="submit" class="btn btn-primary">Submit</button>
 </form>
 
+@section Scripts {
 <script>
-    const roomTypesSelect = document.getElementById('RoomTypes');
-    const chipsContainer = document.getElementById('roomTypeChips');
-    const roomTypeCounts = {};
-
-    function showRoomTypeSelector() {
-        roomTypesSelect.style.display = 'block';
-        roomTypesSelect.focus();
-    }
-
-    roomTypesSelect.addEventListener('change', function () {
-        Array.from(roomTypesSelect.selectedOptions).forEach(option => {
-            if (option.value) {
-                if (!roomTypeCounts[option.value]) {
-                    roomTypeCounts[option.value] = 1;
-                } else {
-                    roomTypeCounts[option.value]++;
-                }
-                updateChips();
-            }
-        });
-        roomTypesSelect.selectedIndex = -1;
-        roomTypesSelect.style.display = 'none';
-        updateSelectedRoomTypes();
-    });
-
-    function removeChip(value) {
-        if (roomTypeCounts[value]) {
-            roomTypeCounts[value]--;
-            if (roomTypeCounts[value] <= 0) {
-                delete roomTypeCounts[value];
-            }
-            updateChips();
-            updateSelectedRoomTypes();
+    window.availableRoomTypes = [
+        @foreach (var roomType in Enum.GetValues(typeof(RoomType)))
+        {
+        @: "@roomType",
         }
-    }
-
-    function updateChips() {
-        chipsContainer.innerHTML = '';
-        Object.keys(roomTypeCounts).forEach(value => {
-            const option = Array.from(roomTypesSelect.options).find(opt => opt.value === value);
-            if (option) {
-                const chip = document.createElement('span');
-                chip.className = 'badge bg-primary me-1';
-                chip.id = 'chip-' + value;
-                chip.innerHTML = `${option.text}*${roomTypeCounts[value]} <span style="cursor:pointer;" onclick="removeChip('${value}')">&times;</span>`;
-                chipsContainer.appendChild(chip);
-            }
-        });
-    }
-
-    function updateSelectedRoomTypes() {
-        // Remove any previous hidden RoomTypes inputs
-        const form = document.querySelector('form');
-        Array.from(document.querySelectorAll('input[name="RoomTypes"]')).forEach(el => el.remove());
-
-        // Create new RoomTypes hidden inputs based on counts
-        Object.entries(roomTypeCounts).forEach(([value, count]) => {
-            for (let i = 0; i < count; i++) {
-                const hiddenInput = document.createElement('input');
-                hiddenInput.type = 'hidden';
-                hiddenInput.name = 'RoomTypes';
-                hiddenInput.value = value;
-                form.appendChild(hiddenInput);
-            }
-        });
-    }
-
-
-    async function showAvailableRooms(roomType) {
-        const response = await fetch(`/Room/GetAvailableRooms?roomType=${roomType}`);
-        if (response.ok) {
-            const res = await response.text();
-            const availableRooms = JSON.parse(res);
-            document.getElementById('roomType-' + roomType).innerText = `${roomType}: ${availableRooms.length}`;
-        } else {
-            document.getElementById('roomType-' + roomType).innerText = `${roomType}: 0`;
-        }
-    }
-
-    document.addEventListener('DOMContentLoaded', function () {
-        const roomTypes = [
-            @foreach (var roomType in Enum.GetValues(typeof(RoomType)))
-            {
-            @: '@roomType',
-            }
-        ];
-        roomTypes.forEach(rt => showAvailableRooms(rt));
-    });
+    ];
 </script>
+<script src="~/js/booking_create.js"></script>
+}
