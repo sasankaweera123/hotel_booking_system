@@ -28,6 +28,69 @@
     "Response": "Let me check future pricing trends for you..."
   },
   {
+    "Intent": "check_room_by_date",
+    "Patterns": [
+      "rooms on",
+      "available rooms on",
+      "vacancies on",
+      "any room on",
+      "check availability for",
+      "is there any room on",
+      "can I stay on"
+    ],
+    "Response": "Checking room availability for the requested date..."
+  },
+  {
+    "Intent": "booking_lookup",
+    "Patterns": [
+      "my booking",
+      "booking for NIC",
+      "reservation for NIC",
+      "check my booking",
+      "what did I book",
+      "show my booking details",
+      "do I have a booking"
+    ],
+    "Response": "Let me look up your booking information..."
+  },
+  {
+    "Intent": "room_price_inquiry",
+    "Patterns": [
+      "how much is a room",
+      "room price",
+      "price of deluxe room",
+      "cost of a suite",
+      "what's the rate for",
+      "pricing for double room"
+    ],
+    "Response": "Looking up pricing information for the selected room type..."
+  },
+  {
+    "Intent": "special_request",
+    "Patterns": [
+      "can I get extra pillows",
+      "is late check-out available",
+      "can I have a sea view",
+      "special request",
+      "add a note to my booking",
+      "do you offer free breakfast",
+      "is wifi included"
+    ],
+    "Response": "I'll help you with special requests and amenities..."
+  },
+  {
+    "Intent": "booking_modification",
+    "Patterns": [
+      "can I modify my booking",
+      "change my check-in date",
+      "update my reservation",
+      "can I cancel my booking",
+      "change guest count",
+      "reschedule my booking"
+    ],
+    "Response": "Booking modification options coming up..."
+  },
+  {
     "Intent": "greeting",
     "Patterns": [
       "hi",
@@ -37,7 +100,7 @@
       "good evening",
       "good afternoon"
     ],
-    "Response": "Hello! I'm your booking assistant. You can ask me about future room availability or prices."
+    "Response": "Hello! I'm your booking assistant. You can ask me about room availability, pricing, or your bookings."
   },
   {
     "Intent": "goodbye",
@@ -52,30 +115,21 @@
     "Response": "You're welcome! Have a great day 😊"
   },
   {
-    "Intent": "fallback",
-    "Patterns": [],
-    "Response": "Sorry, I didn't understand that. Can you rephrase your question?"
-  }, 
-  {
     "Intent": "help",
     "Patterns": [
-    "help",
-    "assist me",
-    "what can you do",
-    "features",
-    "capabilities"
+      "help",
+      "assist me",
+      "what can you do",
+      "features",
+      "capabilities",
+      "how can you help me",
+      "chatbot help"
     ],
-    "Response": "I can help you check room availability and pricing trends for future dates. Just ask me!"
-    },
+    "Response": "I can help you check room availability, pricing trends, view or modify bookings, and more. Try asking about availability or your reservation details!"
+  },
   {
-    "Intent": "thank_you",
-    "Patterns": [
-      "thank you",
-      "thanks",
-      "appreciate it",
-      "grateful",
-      "much appreciated"
-    ],
-    "Response": "You're welcome! If you have any more questions, feel free to ask."
+    "Intent": "fallback",
+    "Patterns": [],
+    "Response": "I'm not sure I understood that. You can try asking about room availability, booking lookup, or pricing trends."
   }
 ]
