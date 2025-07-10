@@ -8,6 +8,7 @@ builder.Services.AddSingleton<BookingService>();
 builder.Services.AddSingleton<RoomService>();
 builder.Services.AddSingleton<RequestService>();
 builder.Services.AddSingleton<ReportService>();
+builder.Services.AddSingleton<ChatBotService>();
 
 var app = builder.Build();
 
