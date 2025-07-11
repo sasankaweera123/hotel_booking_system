@@ -33,7 +33,7 @@ A web-based Hotel Management System developed using **ASP.NET 9.0 MVC**. This sy
 
 | Technology     | Description                          |
 |----------------|--------------------------------------|
-| ASP.NET Core   | Backend framework                    |
+| ASP.NET 9.0   | Backend framework                    |
 | C#             | Programming language                 |
 | Razor Pages    | Frontend templating engine           |
 | JSON           | For chatbot intent definitions       |
