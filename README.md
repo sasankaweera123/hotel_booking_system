@@ -53,5 +53,5 @@ This project follows the **Model-View-Controller (MVC)** pattern:
 
 1. **Clone the repository**:
    ```bash
-   git clone https://github.com/your-username/hotel-management-system.git
+   git clone https://github.com/sasankaweera123/hotel-management-system.git
    cd hotel-management-system
