@@ -2,19 +2,15 @@ using HotelBookingApp.Models;
 
 namespace HotelBookingApp.Services;
 
-public class ReportService
+public class ReportService(RequestService requestService, RoomService roomService, BookingService bookingService)
 {
-    private readonly RequestService _requestService = new();
-    private readonly RoomService _roomService = new();
-    private readonly BookingService _bookingService = new();
-    
     public List<Report> GenerateReports(DateTime fromDate, DateTime toDate)
     {
         var reports = new List<Report>();
 
-        var allBookings = _bookingService.GetAll();
-        var allRooms = _roomService.GetAll();
-        var allRequests = _requestService.GetAll();
+        var allBookings = bookingService.GetAll();
+        var allRooms = roomService.GetAll();
+        var allRequests = requestService.GetAll();
 
         
         if (fromDate > toDate)
