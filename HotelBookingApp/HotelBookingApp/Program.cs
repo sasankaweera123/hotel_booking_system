@@ -4,9 +4,9 @@ var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 builder.Services.AddControllersWithViews();
-builder.Services.AddSingleton<BookingService>();
 builder.Services.AddSingleton<RoomService>();
 builder.Services.AddSingleton<RequestService>();
+builder.Services.AddSingleton<BookingService>();
 builder.Services.AddSingleton<ReportService>();
 builder.Services.AddSingleton<ChatBotService>();
 
