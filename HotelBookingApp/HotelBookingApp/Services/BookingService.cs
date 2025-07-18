@@ -5,12 +5,15 @@ namespace HotelBookingApp.Services;
 
 public class BookingService
 {
-    private readonly List<Booking> _bookings = new();
-    private readonly RequestService _requestService = new();
-    private readonly RoomService _roomService = new();
+    private readonly List<Booking> _bookings = [];
+    private readonly RequestService _requestService;
+    private readonly RoomService _roomService;
 
-    public BookingService()
+    public BookingService(RequestService requestService, RoomService roomService)
     {
+        _requestService = requestService;
+        _roomService = roomService;
+        
         _bookings.Add(new Booking
         {
             Id = 1,
