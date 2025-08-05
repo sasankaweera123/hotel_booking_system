@@ -1,15 +1,23 @@
 using HotelBookingApp.Dto;
 using HotelBookingApp.Models;
+using HotelBookingApp.Models.Utils;
 using HotelBookingApp.Services;
 using Microsoft.AspNetCore.Mvc;
 
 namespace HotelBookingApp.Controllers;
 
- public class BookingController(BookingService bookingService, RoomService roomService) : Controller
+ public class BookingController(BookingService bookingService, RoomService roomService, LogQueue logQueue) : Controller
  {
      // GET: /Booking
      public async Task<IActionResult> Index()
      {
+         
+         logQueue.Queue.Enqueue(new LogMessage
+         {
+             Level = "INFO",
+             Message = "User accessed Booking Index page"
+         });
+         
          var token = HttpContext.Session.GetString("jwtToken");
          if (string.IsNullOrEmpty(token))
              return RedirectToAction("Index", "Login");

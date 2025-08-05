@@ -28,6 +28,8 @@ builder.Services.AddScoped<BookingService>();
 builder.Services.AddScoped<ReportService>();
 builder.Services.AddScoped<ChatBotService>();
 builder.Services.AddScoped<AuthService>();
+builder.Services.AddSingleton<LogQueue>();
+builder.Services.AddHostedService<FileLoggerService>();
 
 var app = builder.Build();
 
