@@ -1,182 +1,80 @@
-using HotelBookingApp.Models;
-using HotelBookingApp.Models.Utils;
+using System.Net.Http.Headers;
+using System.Text;
+using System.Text.Json;
+using HotelBookingApp.Dto;
 
 namespace HotelBookingApp.Services;
 
 public class BookingService
 {
-    private readonly List<Booking> _bookings = [];
-    private readonly RequestService _requestService;
-    private readonly RoomService _roomService;
+    private readonly IHttpClientFactory _httpClientFactory;
+    private readonly IHttpContextAccessor _contextAccessor;
 
-    public BookingService(RequestService requestService, RoomService roomService)
+    public BookingService(IHttpClientFactory httpClientFactory, IHttpContextAccessor contextAccessor)
     {
-        _requestService = requestService;
-        _roomService = roomService;
-        
-        _bookings.Add(new Booking
-        {
-            Id = 1,
-            CustomerName = "Naruto Uzumaki",
-            CustomerNic = "123456789V",
-            CheckIn = DateTime.Today,
-            CheckOut = DateTime.Today.AddDays(2),
-            NumberOfGuests = 2,
-            RoomTypes = [new BookingRoomType { Id = 1, RoomType = RoomType.SUITE }],
-            SpecialRequest = "Late check-in",
-            IsRecurring = false
-        });
-        
-        _bookings.Add(new Booking
-        {
-            Id = 2,
-            CustomerName = "Sakura Haruno",
-            CustomerNic = "987654321V",
-            CheckIn = DateTime.Today.AddDays(3),
-            CheckOut = DateTime.Today.AddDays(5),
-            NumberOfGuests = 10,
-            RoomTypes = [
-                new BookingRoomType { Id = 2, RoomType = RoomType.SUITE },
-                new BookingRoomType { Id = 3, RoomType = RoomType.DOUBLE }
-            ],
-            SpecialRequest = "Ocean view",
-            IsRecurring = true
-        });
-        
-        _bookings.Add(new Booking
-        {
-            Id = 3,
-            CustomerName = "Sasuke Uchiha",
-            CustomerNic = "456789123V",
-            CheckIn = DateTime.Today.AddDays(7),
-            CheckOut = DateTime.Today.AddDays(10),
-            NumberOfGuests = 1,
-            RoomTypes = [
-                new BookingRoomType { Id = 4, RoomType = RoomType.SINGLE },
-            ],
-            SpecialRequest = "Extra pillows",
-            IsRecurring = false
-        });
+        _httpClientFactory = httpClientFactory;
+        _contextAccessor = contextAccessor;
     }
 
-    public List<Booking> GetAll() => _bookings;
-    public Booking? GetById(int id) => _bookings.FirstOrDefault(b => b.Id == id);
-
-    public int Add(Booking booking)
+    private HttpClient CreateClientWithAuth()
     {
-        var requiredRoomGroups = booking.RoomTypes
-            .GroupBy(rt => rt.RoomType)
-            .ToDictionary(g => g.Key, g => g.Count());
+        var client = _httpClientFactory.CreateClient("ApiClient");
+        var token = _contextAccessor.HttpContext!.Session.GetString("jwtToken");
 
-        var roomsToReserve = new List<Room>();
-
-        foreach (var roomType in requiredRoomGroups.Keys)
+        if (!string.IsNullOrEmpty(token))
         {
-            var availableRooms = _roomService.GetAvailableRooms(roomType)
-                                             .Where(r => r.IsAvailable)
-                                             .Take(requiredRoomGroups[roomType])
-                                             .ToList();
-
-            if (availableRooms.Count < requiredRoomGroups[roomType])
-            {
-                return 0;
-            }
-
-            roomsToReserve.AddRange(availableRooms);
-
-            foreach (var room in availableRooms)
-            {
-                // Update the corresponding BookingRoomType to use the reserved room ID
-                var bookingRoom = booking.RoomTypes
-                    .FirstOrDefault(br => br.RoomType == room.Type && br.Id == 0); // Match unassigned ones
-                if (bookingRoom != null)
-                {
-                    bookingRoom.Id = room.Id;
-                }
-            }
-
-        }
-        
-        booking.Id = _bookings.Count + 1;
-        _bookings.Add(booking);
-
-        foreach (var room in roomsToReserve)
-        {
-            room.IsAvailable = false;
-            _roomService.Update(room);
+            client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
         }
 
-        if (!string.IsNullOrWhiteSpace(booking.SpecialRequest))
-        {
-            _requestService.Add(new SpecialRequest
-            {
-                Id = _requestService.GetAll().Count + 1,
-                BookingId = booking.Id,
-                Request = booking.SpecialRequest,
-                Date = booking.CheckIn
-            });
-        }
-
-        return booking.Id;
-        
+        return client;
     }
 
-    public void Update(Booking booking)
+    public async Task<List<BookingDto>> GetMyBookingsAsync()
     {
-        // Remove the old booking
-        Delete(booking.Id);
-        
-        if (booking.CheckIn >= booking.CheckOut || booking.RoomTypes.Count == 0)
-        {
-            return;
-        }
+        var client = CreateClientWithAuth();
+        var response = await client.GetAsync("/booking/mybookings");
 
-        // Add the updated booking
-        Add(booking);
+        if (!response.IsSuccessStatusCode)
+            return new List<BookingDto>();
 
-        // Update special requests
-        var existingRequests = _requestService.GetByBookingId(booking.Id);
-        foreach (var request in existingRequests)
-        {
-            _requestService.Delete(request.Id);
-        }
-
-        if (!string.IsNullOrWhiteSpace(booking.SpecialRequest))
-        {
-            _requestService.Add(new SpecialRequest
-            {
-                Id = _requestService.GetAll().Count + 1,
-                BookingId = booking.Id,
-                Request = booking.SpecialRequest,
-                Date = booking.CheckIn
-            });
-        }
+        var json = await response.Content.ReadAsStringAsync();
+        return JsonSerializer.Deserialize<List<BookingDto>>(json,
+            new JsonSerializerOptions { PropertyNameCaseInsensitive = true })!;
     }
 
-    public void Delete(int id)
+    public async Task<BookingDto?> GetBookingByIdAsync(int id)
     {
-        var booking = _bookings.FirstOrDefault(b => b.Id == id);
-        
-        if (booking == null) return;
-        
-        var requests = _requestService.GetByBookingId(id);
+        var client = CreateClientWithAuth();
+        var response = await client.GetAsync($"/booking/{id}");
 
-        foreach (var request in requests)
-        {
-            _requestService.Delete(request.Id);
-        }
-        
-        var roomIds = booking.RoomTypes.Select(rt => rt.Id).ToList();
-        
-        var rooms = _roomService.GetAll().Where(r => roomIds.Contains(r.Id)).ToList();
-        Console.WriteLine($"Rooms found: {string.Join(", ", rooms.Select(r => $"Id={r.Id}, Type={r.Type}, Available={r.IsAvailable}"))}");
-        
+        if (!response.IsSuccessStatusCode)
+            return null;
 
-        foreach (var room in rooms)
-        {
-            _roomService.UpdateAvailability(room.Id, true);
-        }
-        
-        _bookings.RemoveAll(b => b.Id == id);
+        var json = await response.Content.ReadAsStringAsync();
+        return JsonSerializer.Deserialize<BookingDto>(json,
+            new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+    }
+
+    public async Task<bool> CreateBookingAsync(BookingDto booking)
+    {
+        var client = CreateClientWithAuth();
+        var content = new StringContent(JsonSerializer.Serialize(booking), Encoding.UTF8, "application/json");
+        var response = await client.PostAsync("/booking", content);
+        return response.IsSuccessStatusCode;
+    }
+
+    public async Task<bool> UpdateBookingAsync(int id, BookingDto booking)
+    {
+        var client = CreateClientWithAuth();
+        var content = new StringContent(JsonSerializer.Serialize(booking), Encoding.UTF8, "application/json");
+        var response = await client.PutAsync($"/booking/{id}", content);
+        return response.IsSuccessStatusCode;
+    }
+
+    public async Task<bool> DeleteBookingAsync(int id)
+    {
+        var client = CreateClientWithAuth();
+        var response = await client.DeleteAsync($"/booking/{id}");
+        return response.IsSuccessStatusCode;
     }
 }

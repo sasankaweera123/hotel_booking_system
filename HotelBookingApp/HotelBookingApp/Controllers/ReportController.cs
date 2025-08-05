@@ -1,21 +1,39 @@
+using HotelBookingApp.Dto;
 using HotelBookingApp.Services;
 using Microsoft.AspNetCore.Mvc;
 
 namespace HotelBookingApp.Controllers;
 
-public class ReportController(ReportService reportService) : Controller
+public class ReportController : Controller
 {
-    public IActionResult Index() => View();
-    
-    [HttpPost]
-    public IActionResult Generate(DateTime fromDate, DateTime toDate)
+    private readonly ReportService _reportService;
+
+    public ReportController(ReportService reportService)
     {
-        if (fromDate > toDate)
-        {
-            ViewBag.Alert = "From date must be earlier than to date.";
-            return View("Index");
-        }
-        var reports = reportService.GenerateReports(fromDate, toDate);
-        return View("ReportView", reports);
+        _reportService = reportService;
+    }
+
+    [HttpGet]
+    public IActionResult Index()
+    {
+        var token = HttpContext.Session.GetString("jwtToken");
+        if (string.IsNullOrEmpty(token))
+            return RedirectToAction("Index", "Login");
+
+        return View(new List<ReportDto>()); // Empty list initially
+    }
+
+    [HttpPost]
+    public async Task<IActionResult> Generate(DateTime fromDate, DateTime toDate)
+    {
+        var token = HttpContext.Session.GetString("jwtToken");
+        if (string.IsNullOrEmpty(token))
+            return RedirectToAction("Index", "Login");
+
+        var reports = await _reportService.GetBookingSummaryAsync(fromDate, toDate);
+        ViewBag.FromDate = fromDate.ToString("yyyy-MM-dd");
+        ViewBag.ToDate = toDate.ToString("yyyy-MM-dd");
+
+        return View("Index", reports);
     }
 }

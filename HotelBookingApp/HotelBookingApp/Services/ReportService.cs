@@ -1,59 +1,74 @@
-using HotelBookingApp.Models;
+using System.Net.Http.Headers;
+using System.Text.Json;
+using HotelBookingApp.Dto;
 
 namespace HotelBookingApp.Services;
 
-public class ReportService(RequestService requestService, RoomService roomService, BookingService bookingService)
+public class ReportService
 {
-    public List<Report> GenerateReports(DateTime fromDate, DateTime toDate)
+    private readonly IHttpClientFactory _httpClientFactory;
+    private readonly IHttpContextAccessor _contextAccessor;
+
+    public ReportService(IHttpClientFactory httpClientFactory, IHttpContextAccessor contextAccessor)
     {
-        var reports = new List<Report>();
-
-        var allBookings = bookingService.GetAll();
-        var allRooms = roomService.GetAll();
-        var allRequests = requestService.GetAll();
-
-        
-        if (fromDate > toDate)
-            throw new ArgumentException("fromDate must be earlier than toDate");
-
-        
-        var filteredBookings = allBookings
-            .Where(b => b.CheckIn.Date >= fromDate.Date && b.CheckIn.Date <= toDate.Date)
-            .ToList();
-
-        var filteredRequests = allRequests
-            .Where(r => r.Date.Date >= fromDate.Date && r.Date.Date <= toDate.Date)
-            .ToList();
-
-        // Generate daily reports within the range
-        for (var date = fromDate.Date; date <= toDate.Date; date = date.AddDays(1))
-        {
-            var bookingsForDay = filteredBookings
-                .Where(b => b.CheckIn.Date == date)
-                .ToList();
-
-            var requestsForDay = filteredRequests
-                .Where(r => r.Date.Date == date)
-                .ToList();
-
-            var totalRoomsBooked = bookingsForDay.Sum(b => b.RoomTypes?.Count ?? 0);
-            var totalRevenue = bookingsForDay.Sum(b =>
-            {
-                return b.RoomTypes.Select(bookedRoomType => allRooms.FirstOrDefault(r => r.Type == bookedRoomType.RoomType)).Select(room => room?.Price ?? 0).Sum();
-            });
-
-            reports.Add(new Report
-            {
-                StartDate = date,
-                EndDate = date,
-                TotalBookings = bookingsForDay.Count,
-                TotalRoomsBooked = totalRoomsBooked,
-                TotalRevenue = totalRevenue,
-                Comments = $"{requestsForDay.Count} special requests"
-            });
-        }
-
-        return reports;
+        _httpClientFactory = httpClientFactory;
+        _contextAccessor = contextAccessor;
     }
 
+    /// <summary>
+    /// Creates an HttpClient with JWT token from Session
+    /// </summary>
+    private HttpClient CreateClientWithAuth()
+    {
+        var client = _httpClientFactory.CreateClient("ApiClient");
+        var token = _contextAccessor.HttpContext!.Session.GetString("jwtToken");
+
+        if (!string.IsNullOrEmpty(token))
+        {
+            client.DefaultRequestHeaders.Authorization =
+                new AuthenticationHeaderValue("Bearer", token);
+        }
+
+        return client;
+    }
+
+    /// <summary>
+    /// Get full booking summary (no date filter)
+    /// </summary>
+    public async Task<List<ReportDto>> GetBookingSummaryAsync()
+    {
+        var client = CreateClientWithAuth();
+        var response = await client.GetAsync("/reporting/summary");
+
+        if (!response.IsSuccessStatusCode)
+            return new List<ReportDto>();
+
+        var json = await response.Content.ReadAsStringAsync();
+        return JsonSerializer.Deserialize<List<ReportDto>>(json, new JsonSerializerOptions
+        {
+            PropertyNameCaseInsensitive = true
+        })!;
+    }
+
+    /// <summary>
+    /// Get booking summary filtered by date range
+    /// </summary>
+    public async Task<List<ReportDto>> GetBookingSummaryAsync(DateTime fromDate, DateTime toDate)
+    {
+        var client = CreateClientWithAuth();
+
+        // Build query string for filtering
+        string url = $"/reporting/summary?fromDate={fromDate:yyyy-MM-dd}&toDate={toDate:yyyy-MM-dd}";
+
+        var response = await client.GetAsync(url);
+
+        if (!response.IsSuccessStatusCode)
+            return new List<ReportDto>();
+
+        var json = await response.Content.ReadAsStringAsync();
+        return JsonSerializer.Deserialize<List<ReportDto>>(json, new JsonSerializerOptions
+        {
+            PropertyNameCaseInsensitive = true
+        })!;
+    }
 }

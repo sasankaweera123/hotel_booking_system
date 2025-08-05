@@ -1,14 +1,32 @@
-@model Room
+@model HotelBookingApp.Dto.RoomDto
+@inject HotelBookingApp.Services.RoomService RoomService
 
 @{
-    Layout = "~/Views/Shared/_Layout.cshtml";
-    ViewData["Title"] = "Delete Room";
+    ViewBag.Title = "Delete Room";
+    var hotel = (await RoomService.GetHotelsAsync()).FirstOrDefault(h => h.Id == Model.HotelId);
+    var roomType = (await RoomService.GetRoomTypesAsync()).FirstOrDefault(rt => rt.Id == Model.RoomTypeId);
 }
 
-<h2>Delete Room</h2>
-<form asp-action="Delete" method="post">
-    <input type="hidden" asp-for="Id" />
-    <p>Are you sure you want to delete the room of type <strong>@Model.Type</strong>?</p>
-    <button type="submit" class="btn btn-danger">Yes, delete</button>
-    <a href="/Room" class="btn btn-secondary">Cancel</a>
-</form>
+<div class="container mt-4">
+    <h2>Delete Room</h2>
+
+    <div class="alert alert-warning">
+        Are you sure you want to delete room <strong>@Model.RoomNumber</strong>?
+    </div>
+
+    <dl class="row">
+        <dt class="col-sm-3">Room Number</dt>
+        <dd class="col-sm-9">@Model.RoomNumber</dd>
+
+        <dt class="col-sm-3">Room Type</dt>
+        <dd class="col-sm-9">@roomType?.Name ?? "Unknown"</dd>
+
+        <dt class="col-sm-3">Hotel</dt>
+        <dd class="col-sm-9">@hotel?.Name ?? "Unknown"</dd>
+    </dl>
+
+    <form method="post" asp-action="DeleteConfirmed" asp-route-id="@Model.Id">
+        <button type="submit" class="btn btn-danger">Yes, Delete</button>
+        <a class="btn btn-secondary" asp-action="Index">Cancel</a>
+    </form>
+</div>

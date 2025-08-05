@@ -1,69 +1,140 @@
+using HotelBookingApp.Dto;
 using HotelBookingApp.Models;
 using HotelBookingApp.Services;
 using Microsoft.AspNetCore.Mvc;
 
 namespace HotelBookingApp.Controllers;
 
-public class BookingController(BookingService bookingService) : Controller
-{
-    public IActionResult Index() => View(bookingService.GetAll());
+ public class BookingController(BookingService bookingService, RoomService roomService) : Controller
+ {
+     // GET: /Booking
+     public async Task<IActionResult> Index()
+     {
+         var token = HttpContext.Session.GetString("jwtToken");
+         if (string.IsNullOrEmpty(token))
+             return RedirectToAction("Index", "Login");
 
-    public IActionResult Create() => View();
+         var bookings = await bookingService.GetMyBookingsAsync();
+         var hotels = await roomService.GetHotelsAsync();
+         var rooms = await roomService.GetRoomsAsync();
+         var roomTypes = await roomService.GetRoomTypesAsync();
 
-    [HttpPost]
-    public IActionResult Create(Booking booking)
-    {
-        Console.WriteLine($"Creating booking for {booking}");
-        
-        if(booking.RoomTypes.Count <= 0)
+         var viewModel = bookings.Select(b =>
+         {
+             var room = rooms.FirstOrDefault(r => r.Id == b.RoomId);
+             var hotel = hotels.FirstOrDefault(h => h.Id == b.HotelId);
+             var roomTypeName = room != null
+                 ? (roomTypes.FirstOrDefault(rt => rt.Id == room.RoomTypeId)?.Name ?? "Unknown")
+                 : "Unknown";
+
+             return new BookingListViewModel
+             {
+                 Id = b.Id,
+                 HotelName = hotel?.Name ?? "Unknown",
+                 RoomNumber = room?.RoomNumber ?? "Unknown",
+                 RoomTypeName = roomTypeName,
+                 Status = b.Status,
+                 CheckInDate = b.CheckInDate,
+                 CheckOutDate = b.CheckOutDate,
+                 SpecialRequests = b.SpecialRequest ?? "None",
+             };
+         }).ToList();
+
+         return View(viewModel);
+     }
+
+        // GET: /Booking/Create
+        public IActionResult Create()
         {
-            ViewBag.Alert = "Invalid room selected. Please choose a valid room.";
+            // Ensure user is logged in
+            var token = HttpContext.Session.GetString("jwtToken");
+            if (string.IsNullOrEmpty(token))
+                return RedirectToAction("Index", "Login");
+
+            return View(new BookingDto
+            {
+                Status = "Confirmed",
+                CheckInDate = DateTime.Today,
+                CheckOutDate = DateTime.Today.AddDays(1)
+            });
+        }
+
+        // POST: /Booking/Create
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Create(BookingDto booking)
+        {
+            if (!ModelState.IsValid) return View(booking);
+            
+            var success = await bookingService.CreateBookingAsync(booking);
+            if (success)
+            {
+                TempData["Success"] = "Booking created successfully!";
+                return RedirectToAction(nameof(Index));
+            }
+
+            ViewBag.Error = "Failed to create booking.";
             return View(booking);
         }
-        if(booking.CheckIn >= booking.CheckOut)
+
+        // GET: /Booking/Edit/5
+        public async Task<IActionResult> Edit(int id)
         {
-            ViewBag.Alert = "Check-out date must be after check-in date.";
+            var token = HttpContext.Session.GetString("jwtToken");
+            if (string.IsNullOrEmpty(token))
+                return RedirectToAction("Index", "Login");
+
+            var booking = await bookingService.GetBookingByIdAsync(id);
+            if (booking == null) return NotFound();
+
             return View(booking);
         }
-        
-        var bookingId = bookingService.Add(booking); 
-        if(bookingId > 0) return RedirectToAction("Index");
-        else
+
+        // POST: /Booking/Edit/5
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Edit(int id, BookingDto booking)
         {
-            ViewBag.Alert = "Booking creation failed. Room might not be available or invalid data provided.";
+            if (id != booking.Id) return BadRequest();
+
+            if (!ModelState.IsValid) return View(booking);
+            
+            var success = await bookingService.UpdateBookingAsync(id, booking);
+            if (success)
+            {
+                TempData["Success"] = "Booking updated successfully!";
+                return RedirectToAction(nameof(Index));
+            }
+
+            ViewBag.Error = "Failed to update booking.";
+
             return View(booking);
+        }
+
+        // GET: /Booking/Delete/5
+        public async Task<IActionResult> Delete(int id)
+        {
+            var token = HttpContext.Session.GetString("jwtToken");
+            if (string.IsNullOrEmpty(token))
+                return RedirectToAction("Index", "Login");
+
+            var booking = await bookingService.GetBookingByIdAsync(id);
+            if (booking == null) return NotFound();
+
+            return View(booking); // Must match Views/Booking/Delete.cshtml
+        }
+
+        // POST: /Booking/Delete/5
+        [HttpPost, ActionName("Delete")]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> DeleteConfirmed(int id)
+        {
+            var success = await bookingService.DeleteBookingAsync(id);
+
+            TempData["Success"] = success 
+                ? "Booking deleted successfully!" 
+                : "Failed to delete booking.";
+
+            return RedirectToAction(nameof(Index));
         }
     }
-
-    public IActionResult Edit(int id) => View(bookingService.GetById(id));
-
-    [HttpPost]
-    public IActionResult Edit(Booking booking)
-    {
-        
-        if (!ModelState.IsValid)
-        {
-            ViewBag.Alert = "Invalid booking data. Please check your input.";
-            return View(booking);
-        }
-        
-        if (booking.RoomTypes.Count <= 0)
-        {
-            ViewBag.Alert = "Invalid room selected. Please choose a valid room.";
-            return View(booking);
-        }
-        
-        if (booking.CheckIn >= booking.CheckOut)
-        {
-            ViewBag.Alert = "Check-out date must be after check-in date.";
-            return View(booking);
-        }
-        
-        bookingService.Update(booking); 
-        return RedirectToAction("Index");
-    }
-
-    public IActionResult Delete(int id) => View(bookingService.GetById(id));
-    [HttpPost, ActionName("Delete")]
-    public IActionResult DeleteConfirmed(int id) { bookingService.Delete(id); return RedirectToAction("Index"); }
-}

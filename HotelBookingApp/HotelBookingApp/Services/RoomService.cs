@@ -1,45 +1,104 @@
-using HotelBookingApp.Models;
-using HotelBookingApp.Models.Utils;
+using System.Net.Http.Headers;
+using System.Text;
+using System.Text.Json;
+using HotelBookingApp.Dto;
 
 namespace HotelBookingApp.Services;
 
 public class RoomService
 {
-    private readonly List<Room> _rooms = new();
+    private readonly IHttpClientFactory _httpClientFactory;
+    private readonly IHttpContextAccessor _contextAccessor;
 
-    public RoomService()
+    public RoomService(IHttpClientFactory httpClientFactory, IHttpContextAccessor contextAccessor)
     {
-        _rooms.Add(new Room { Id = 1, Type = RoomType.DOUBLE, Price = 100, IsAvailable = false }); // For Naruto
-        _rooms.Add(new Room { Id = 2, Type = RoomType.SUITE, Price = 200, IsAvailable = false });  // For Sakura
-        _rooms.Add(new Room { Id = 3, Type = RoomType.DOUBLE, Price = 100, IsAvailable = false }); // For Sakura
-        _rooms.Add(new Room { Id = 4, Type = RoomType.SINGLE, Price = 80, IsAvailable = false });  // For Sasuke
-
-        // Add more rooms for diversity/testing
-        _rooms.Add(new Room { Id = 5, Type = RoomType.SINGLE, Price = 80, IsAvailable = true });
-        _rooms.Add(new Room { Id = 6, Type = RoomType.DOUBLE, Price = 100, IsAvailable = true });
-        _rooms.Add(new Room { Id = 7, Type = RoomType.SUITE, Price = 200, IsAvailable = true });
-        _rooms.Add(new Room { Id = 8, Type = RoomType.SUITE, Price = 220, IsAvailable = false });
+        _httpClientFactory = httpClientFactory;
+        _contextAccessor = contextAccessor;
     }
 
-    public List<Room> GetAll() => _rooms;
-    public Room? GetById(int id) => _rooms.FirstOrDefault(r => r.Id == id);
-    public List<Room> GetAvailableRooms(RoomType type)
-        => _rooms.Where(r => r.Type == type && r.IsAvailable).ToList();
-    public void Add(Room room) => _rooms.Add(room);
-    public void Update(Room room)
+    private HttpClient CreateClientWithAuth()
     {
-        var index = _rooms.FindIndex(r => r.Id == room.Id);
-        if (index != -1)
-            _rooms[index] = room;
+        var client = _httpClientFactory.CreateClient("ApiClient");
+        var token = _contextAccessor.HttpContext!.Session.GetString("jwtToken");
+
+        if (!string.IsNullOrEmpty(token))
+        {
+            client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+        }
+
+        return client;
+    }
+
+    public async Task<List<RoomDto>> GetRoomsAsync()
+    {
+        var client = CreateClientWithAuth();
+        var response = await client.GetAsync("/hotel/room");
+
+        if (!response.IsSuccessStatusCode)
+            return new List<RoomDto>();
+
+        var json = await response.Content.ReadAsStringAsync();
+        return JsonSerializer.Deserialize<List<RoomDto>>(json,
+            new JsonSerializerOptions { PropertyNameCaseInsensitive = true })!;
+    }
+
+    public async Task<RoomDto?> GetRoomByIdAsync(int id)
+    {
+        var client = CreateClientWithAuth();
+        var response = await client.GetAsync($"/hotel/room/{id}");
+
+        if (!response.IsSuccessStatusCode)
+            return null;
+
+        var json = await response.Content.ReadAsStringAsync();
+        return JsonSerializer.Deserialize<RoomDto>(json,
+            new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+    }
+
+    public async Task<bool> CreateRoomAsync(RoomDto room)
+    {
+        var client = CreateClientWithAuth();
+        var content = new StringContent(JsonSerializer.Serialize(room), Encoding.UTF8, "application/json");
+        var response = await client.PostAsync("/hotel/room", content);
+        return response.IsSuccessStatusCode;
+    }
+
+    public async Task<bool> UpdateRoomAsync(int id, RoomDto room)
+    {
+        var client = CreateClientWithAuth();
+        var content = new StringContent(JsonSerializer.Serialize(room), Encoding.UTF8, "application/json");
+        var response = await client.PutAsync($"/hotel/room/{id}", content);
+        return response.IsSuccessStatusCode;
+    }
+
+    public async Task<bool> DeleteRoomAsync(int id)
+    {
+        var client = CreateClientWithAuth();
+        var response = await client.DeleteAsync($"/hotel/room/{id}");
+        return response.IsSuccessStatusCode;
     }
     
-    public void UpdateAvailability(int id, bool isAvailable)
+    public async Task<List<HotelDto>> GetHotelsAsync()
     {
-        var room = GetById(id);
-        if (room == null) return;
-        room.IsAvailable = isAvailable;
-        Update(room);
+        var client = CreateClientWithAuth();
+        var response = await client.GetAsync("/hotel");
+
+        if (!response.IsSuccessStatusCode)
+            return new List<HotelDto>();
+
+        var json = await response.Content.ReadAsStringAsync();
+        return JsonSerializer.Deserialize<List<HotelDto>>(json, new JsonSerializerOptions { PropertyNameCaseInsensitive = true })!;
     }
-    
-    public void Delete(int id) => _rooms.RemoveAll(r => r.Id == id);
+
+    public async Task<List<RoomTypeDto>> GetRoomTypesAsync()
+    {
+        var client = CreateClientWithAuth();
+        var response = await client.GetAsync("/hotel/roomtype");
+
+        if (!response.IsSuccessStatusCode)
+            return new List<RoomTypeDto>();
+
+        var json = await response.Content.ReadAsStringAsync();
+        return JsonSerializer.Deserialize<List<RoomTypeDto>>(json, new JsonSerializerOptions { PropertyNameCaseInsensitive = true })!;
+    }
 }

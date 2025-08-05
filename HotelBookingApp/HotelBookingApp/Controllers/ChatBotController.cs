@@ -1,23 +1,39 @@
 using HotelBookingApp.Models.Utils;
 using HotelBookingApp.Services;
 using Microsoft.AspNetCore.Mvc;
-namespace HotelBookingApp.Controllers;
 
-[ApiController]
-[Route("api/[controller]")]
-public class ChatBotController(ChatBotService chatBotService) : ControllerBase
+namespace HotelBookingApp.Controllers
 {
-    [HttpPost("message")]
-    public IActionResult PostMessage([FromBody] ChatMessage message)
+    [ApiController]
+    [Route("api/[controller]")]
+    public class ChatBotController : ControllerBase
     {
-        try
+        private readonly ChatBotService _chatBotService;
+
+        public ChatBotController(ChatBotService chatBotService)
         {
-            var response = chatBotService.GetResponse(message);
-            return Ok(new ChatMessage { Text = response });
+            _chatBotService = chatBotService;
         }
-        catch (Exception ex)
+        
+        [HttpPost("message")]
+        public async Task<IActionResult> PostMessage([FromBody] ChatMessage message)
         {
-            return StatusCode(500, new ChatMessage { Text = "An internal error occurred: " + ex.Message });
+            try
+            {
+                if (message == null || string.IsNullOrWhiteSpace(message.Text))
+                    return BadRequest(new { reply = "Message cannot be empty." });
+
+                // Call updated async chatbot logic
+                var response = await _chatBotService.GetResponseAsync(message);
+
+                // Return JSON reply for frontend
+                return Ok(new { text = response }); 
+
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { reply = "An internal error occurred: " + ex.Message });
+            }
         }
     }
 }

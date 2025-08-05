@@ -2,34 +2,51 @@ using HotelBookingApp.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Add services to the container.
+// 1. Add MVC with views
 builder.Services.AddControllersWithViews();
-builder.Services.AddSingleton<RoomService>();
-builder.Services.AddSingleton<RequestService>();
-builder.Services.AddSingleton<BookingService>();
-builder.Services.AddSingleton<ReportService>();
-builder.Services.AddSingleton<ChatBotService>();
+
+// 2. Add HttpClient to call API Gateway
+builder.Services.AddHttpClient("ApiClient", client =>
+{
+    client.BaseAddress = new Uri("https://localhost:6000"); // Gateway base URL
+});
+
+// 3. Add HttpContextAccessor & Session to store JWT
+builder.Services.AddHttpContextAccessor();
+builder.Services.AddDistributedMemoryCache();
+builder.Services.AddSession(options =>
+{
+    options.IdleTimeout = TimeSpan.FromMinutes(30);
+    options.Cookie.HttpOnly = true;
+    options.Cookie.IsEssential = true;
+});
+
+// 4. Add application services
+builder.Services.AddScoped<RoomService>();
+builder.Services.AddScoped<RequestService>();
+builder.Services.AddScoped<BookingService>();
+builder.Services.AddScoped<ReportService>();
+builder.Services.AddScoped<ChatBotService>();
+builder.Services.AddScoped<AuthService>();
 
 var app = builder.Build();
 
-// Configure the HTTP request pipeline.
+// 5. Configure middleware pipeline
 if (!app.Environment.IsDevelopment())
 {
     app.UseExceptionHandler("/Home/Error");
-    // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
     app.UseHsts();
 }
 
 app.UseHttpsRedirection();
+app.UseStaticFiles(); // for CSS/JS
+
 app.UseRouting();
-
+app.UseSession();      // enable session for JWT storage
 app.UseAuthorization();
-
-app.MapStaticAssets();
 
 app.MapControllerRoute(
     name: "default",
-    pattern: "{controller=Home}/{action=Index}/{id?}");
-
+    pattern: "{controller=Login}/{action=Index}/{id?}");
 
 app.Run();

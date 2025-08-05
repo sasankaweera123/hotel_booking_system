@@ -1,77 +1,41 @@
-@using HotelBookingApp.Models.Utils
-@model Booking
-@{
-Layout = "~/Views/Shared/_Layout.cshtml";
-ViewData["Title"] = "Create Booking";
-}
-@if (ViewBag.Alert != null)
-{
-<div class="alert alert-danger" role="alert">
-    @ViewBag.Alert
+@model HotelBookingApp.Dto.BookingDto
+
+<div class="container mt-4">
+    <h2>Create Booking</h2>
+
+    @if (ViewBag.Error != null)
+    {
+        <div class="alert alert-danger">@ViewBag.Error</div>
+    }
+
+    <form method="post" class="card p-3 shadow-sm">
+        <div class="mb-3">
+            <label class="form-label">Hotel ID</label>
+            <input asp-for="HotelId" class="form-control" required/>
+        </div>
+        <div class="mb-3">
+            <label class="form-label">Room ID</label>
+            <input asp-for="RoomId" class="form-control" required/>
+        </div>
+        <div class="row mb-3">
+            <div class="col">
+                <label class="form-label">Check-In Date</label>
+                <input asp-for="CheckInDate" type="date" class="form-control" required/>
+            </div>
+            <div class="col">
+                <label class="form-label">Check-Out Date</label>
+                <input asp-for="CheckOutDate" type="date" class="form-control" required/>
+            </div>
+        </div>
+        <div class="mb-3">
+            <label class="form-label">Status</label>
+            <input asp-for="Status" class="form-control" value="Confirmed"/>
+        </div>
+        <div class="mb-3">
+            <label class="form-label">Special Request</label>
+            <textarea asp-for="SpecialRequest" class="form-control" placeholder="Any special instructions..."></textarea>
+        </div>
+        <button type="submit" class="btn btn-success">Create</button>
+        <a class="btn btn-secondary" asp-action="Index">Cancel</a>
+    </form>
 </div>
-}
-<h2>Create Booking</h2>
-
-<div>
-    <label class="form-label">Available Rooms</label>
-    <div class="mb-2" id="availableRoomsContainer">
-        @foreach (var roomType in Enum.GetValues(typeof(RoomType)))
-        {
-        <span class="badge bg-info text-dark me-2 fs-3" id="roomType-@roomType">
-                @roomType: <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
-            </span>
-        }
-    </div>
-</div>
-
-<form asp-action="Create" method="post">
-    <div class="mb-3">
-        <label class="form-label">Customer Name</label>
-        <input asp-for="CustomerName" class="form-control"/>
-    </div>
-    <div class="mb-3">
-        <label class="form-label">Customer NIC</label>
-        <input asp-for="CustomerNic" class="form-control"/>
-    </div>
-    <div class="mb-3">
-        <label class="form-label">Number of Guests</label>
-    <input asp-for="NumberOfGuests" class="form-control" type="number" min="1"/>
-    </div>
-    <div class="mb-3">
-        <label class="form-label">Room Types</label>
-        <select asp-for="RoomTypes" class="form-control" asp-items="Html.GetEnumSelectList<RoomType>()" id="RoomTypes"
-                multiple style="display:none;"></select>
-        <div id="roomTypeChips" class="mb-2"></div>
-        <button type="button" class="btn btn-secondary btn-sm" onclick="showRoomTypeSelector()">Add Room Type</button>
-        <input type="hidden" name="RoomTypesWithCounts" id="RoomTypesWithCounts"/>
-    </div>
-    <div class="mb-3">
-        <label class="form-label">Check-In</label>
-        <input asp-for="CheckIn" class="form-control" type="date"/>
-    </div>
-    <div class="mb-3">
-        <label class="form-label">Check-Out</label>
-        <input asp-for="CheckOut" class="form-control" type="date"/>
-    </div>
-    <div class="mb-3">
-        <label class="form-label">Special Request</label>
-        <input asp-for="SpecialRequest" class="form-control"/>
-    </div>
-    <div class="form-check mb-3">
-        <input asp-for="IsRecurring" class="form-check-input" type="checkbox"/>
-        <label class="form-check-label">Recurring</label>
-    </div>
-    <button type="submit" class="btn btn-primary">Submit</button>
-</form>
-
-@section Scripts {
-<script>
-    window.availableRoomTypes = [
-        @foreach (var roomType in Enum.GetValues(typeof(RoomType)))
-        {
-        @: "@roomType",
-        }
-    ];
-</script>
-<script src="~/js/booking_create.js"></script>
-}

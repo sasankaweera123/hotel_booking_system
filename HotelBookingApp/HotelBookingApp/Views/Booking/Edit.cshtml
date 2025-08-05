@@ -1,111 +1,89 @@
-@using HotelBookingApp.Models.Utils
-@model Booking
+@model HotelBookingApp.Dto.BookingDto
+@inject HotelBookingApp.Services.RoomService RoomService
+
 @{
-    Layout = "~/Views/Shared/_Layout.cshtml";
-    ViewData["Title"] = "Edit Booking";
+    ViewBag.Title = "Edit Booking";
+
+    var hotels = await RoomService.GetHotelsAsync();
+    var rooms = await RoomService.GetRoomsAsync();
+    var roomTypes = await RoomService.GetRoomTypesAsync();
+
+    var selectedRoom = rooms.FirstOrDefault(r => r.Id == Model.RoomId);
+    var selectedRoomType = selectedRoom != null
+        ? roomTypes.FirstOrDefault(rt => rt.Id == selectedRoom.RoomTypeId)
+        : null;
 }
 
-<h2>Edit Booking</h2>
-<form asp-action="Edit" method="post">
-    <input type="hidden" asp-for="Id"/>
-    <div class="mb-3">
-        <label class="form-label">Customer Name</label>
-        <input asp-for="CustomerName" class="form-control"/>
-    </div>
-    <div class="mb-3">
-        <label class="form-label">Customer NIC</label>
-        <input asp-for="CustomerNic" class="form-control"/>
-    </div>
-    <div class="mb-3">
-        <label class="form-label">Number of Guests</label>
-        <input asp-for="NumberOfGuests" class="form-control" type="number" min="1"/>
-    </div>
-    <div class="mb-3">
-        <label class="form-label">Room Type</label>
-        <div class="chip-group">
-            <label class="form-label">Room Types</label>
-            <div class="mb-2">
-                <select id="roomTypeSelect" class="form-select">
-                    <option value="">Select Room Type</option>
-                    @foreach (var roomType in Enum.GetValues(typeof(RoomType)))
-                    {
-                        <option value="@roomType">@roomType</option>
-                    }
-                </select>
-                <button type="button" class="btn btn-secondary ms-2" onclick="addRoomType()">Add</button>
-            </div>
-            <div class="chip-group" id="roomTypeChips">
-                @for (int i = 0; i < Model.RoomTypes.Count; i++)
+<div class="container mt-4">
+    <h2>Edit Booking</h2>
+
+    @if (ViewBag.Error != null)
+    {
+        <div class="alert alert-danger">@ViewBag.Error</div>
+    }
+
+    <form method="post" class="card p-3 shadow-sm">
+        <input type="hidden" asp-for="Id"/>
+
+        <div class="mb-3">
+            <label class="form-label">Hotel</label>
+            <select asp-for="HotelId" class="form-select" required>
+                @foreach (var hotel in hotels)
                 {
-                    <span class="chip" id="chip-@i">
-                        @Model.RoomTypes[i].RoomType
-                        <button type="button" class="btn-close ms-1" aria-label="Remove"
-                                onclick="removeRoomType(@i)"></button>
-                    </span>
+                    <option value="@hotel.Id" selected="@(hotel.Id == Model.HotelId)">
+                        @hotel.Name
+                    </option>
                 }
-
-            </div>
-            @for (int i = 0; i < Model.RoomTypes.Count; i++)
-            {
-                <input type="hidden" name="RoomTypes[@i].Id" value="@Model.RoomTypes[i].Id"/>
-                <input type="hidden" name="RoomTypes[@i].RoomType" value="@Model.RoomTypes[i].RoomType"/>
-            }
+            </select>
         </div>
-    </div>
-    <div class="mb-3">
-        <label class="form-label">Check-In</label>
-        <input asp-for="CheckIn" class="form-control" type="date"/>
-    </div>
-    <div class="mb-3">
-        <label class="form-label">Check-Out</label>
-        <input asp-for="CheckOut" class="form-control" type="date"/>
-    </div>
-    <div class="mb-3">
-        <label class="form-label">Special Request</label>
-        <input asp-for="SpecialRequest" class="form-control"/>
-    </div>
-    <div class="form-check mb-3">
-        <input asp-for="IsRecurring" class="form-check-input" type="checkbox"/>
-        <label class="form-check-label">Recurring</label>
-    </div>
-    <button type="submit" class="btn btn-primary">Update</button>
-</form>
 
-<script>
-let roomTypeIndex = @Model.RoomTypes.Count;
+        <div class="mb-3">
+            <label class="form-label">Room</label>
+            <select asp-for="RoomId" class="form-select" required>
+                @foreach (var room in rooms)
+                {
+                    <option value="@room.Id" selected="@(room.Id == Model.RoomId)">
+                        Room @room.RoomNumber (Hotel: @hotels.FirstOrDefault(h => h.Id == room.HotelId)?.Name)
+                    </option>
+                }
+            </select>
+        </div>
 
-function addRoomType() {
-    const select = document.getElementById('roomTypeSelect');
-    const selectedValue = select.value;
-    if (!selectedValue) return;
+        <div class="mb-3">
+            <label class="form-label">Room Type</label>
+            @{
+                var roomTypeName = selectedRoomType?.Name ?? "Unknown";
+            }
 
-    // Add chip
-    const chip = document.createElement('span');
-    chip.className = 'chip';
-    chip.id = `chip-${roomTypeIndex}`;
-    chip.innerHTML = `${selectedValue} <button type="button" class="btn-close ms-1" aria-label="Remove" onclick="removeRoomType(${roomTypeIndex})"></button>`;
-    document.getElementById('roomTypeChips').appendChild(chip);
+            <input type="text" class="form-control" value="@roomTypeName" readonly />
 
-    // Add hidden inputs
-    const container = document.querySelector('form');
-    const inputId = document.createElement('input');
-    inputId.type = 'hidden';
-    inputId.name = `RoomTypes[${roomTypeIndex}].Id`;
-    inputId.value = 0; // Default to 0, or whatever logic you use
-    container.appendChild(inputId);
+        </div>
 
-    const inputType = document.createElement('input');
-    inputType.type = 'hidden';
-    inputType.name = `RoomTypes[${roomTypeIndex}].RoomType`;
-    inputType.value = selectedValue;
-    container.appendChild(inputType);
+        <div class="row mb-3">
+            <div class="col">
+                <label class="form-label">Check-In Date</label>
+                <input asp-for="CheckInDate" type="date" class="form-control" required/>
+            </div>
+            <div class="col">
+                <label class="form-label">Check-Out Date</label>
+                <input asp-for="CheckOutDate" type="date" class="form-control" required/>
+            </div>
+        </div>
 
-    roomTypeIndex++;
-}
+        <div class="mb-3">
+            <label class="form-label">Status</label>
+            <select asp-for="Status" class="form-select">
+                <option value="Confirmed" selected="@(Model.Status == "Confirmed")">Confirmed</option>
+                <option value="Cancelled" selected="@(Model.Status == "Cancelled")">Cancelled</option>
+            </select>
+        </div>
+        
+        <div class="mb-3">
+            <label class="form-label">Special Request</label>
+            <input asp-for="SpecialRequest" class="form-control" />
+        </div>  
 
-function removeRoomType(index) {
-    document.getElementById(`chip-${index}`)?.remove();
-    document.querySelector(`input[name="RoomTypes[${index}].Id"]`)?.remove();
-    document.querySelector(`input[name="RoomTypes[${index}].RoomType"]`)?.remove();
-}
-</script>
+        <button type="submit" class="btn btn-primary">Save Changes</button>
+        <a class="btn btn-secondary" asp-action="Index">Cancel</a>
+    </form>
+</div>
