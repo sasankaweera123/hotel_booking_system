@@ -6,15 +6,8 @@ namespace HotelBookingApp.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
-    public class ChatBotController : ControllerBase
+    public class ChatBotController(ChatBotService chatBotService) : ControllerBase
     {
-        private readonly ChatBotService _chatBotService;
-
-        public ChatBotController(ChatBotService chatBotService)
-        {
-            _chatBotService = chatBotService;
-        }
-        
         [HttpPost("message")]
         public async Task<IActionResult> PostMessage([FromBody] ChatMessage message)
         {
@@ -24,7 +17,7 @@ namespace HotelBookingApp.Controllers
                     return BadRequest(new { reply = "Message cannot be empty." });
 
                 // Call updated async chatbot logic
-                var response = await _chatBotService.GetResponseAsync(message);
+                var response = await chatBotService.GetResponseAsync(message);
 
                 // Return JSON reply for frontend
                 return Ok(new { text = response }); 
