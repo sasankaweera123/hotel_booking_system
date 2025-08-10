@@ -101,4 +101,12 @@ public class RoomService
         var json = await response.Content.ReadAsStringAsync();
         return JsonSerializer.Deserialize<List<RoomTypeDto>>(json, new JsonSerializerOptions { PropertyNameCaseInsensitive = true })!;
     }
+    
+    public async Task<List<RoomDto>> GetAvailableRoomsByHotelAsync(int hotelId)
+    {
+        var client = CreateClientWithAuth();
+        var rooms = await client.GetFromJsonAsync<List<RoomDto>>($"/hotel/room/by-hotel/{hotelId}");
+        return rooms?.Where(r => r.IsAvailable).ToList() ?? new List<RoomDto>();
+    }
+
 }

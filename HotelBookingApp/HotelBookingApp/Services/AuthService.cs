@@ -1,5 +1,9 @@
+using System.Security.Claims;
 using System.Text;
 using System.Text.Json;
+using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Authentication.Cookies;
+using System.IdentityModel.Tokens.Jwt;
 
 namespace HotelBookingApp.Services;
 
@@ -26,6 +30,18 @@ public class AuthService(IHttpClientFactory httpClientFactory, IHttpContextAcces
                 return false;
 
             contextAccessor.HttpContext!.Session.SetString("jwtToken", token);
+            var handler = new JwtSecurityTokenHandler();
+            var jwtToken = handler.ReadJwtToken(token);
+
+            var claims = jwtToken.Claims.ToList();
+            var identity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
+            var principal = new ClaimsPrincipal(identity);
+
+            await contextAccessor.HttpContext!.SignInAsync(
+                CookieAuthenticationDefaults.AuthenticationScheme,
+                principal
+            );
+
             return true;
         }catch (Exception ex)
         {

@@ -6,6 +6,8 @@ public class BookingListViewModel
     public string HotelName { get; set; } = "";
     public string RoomNumber { get; set; } = "";
     public string RoomTypeName { get; set; } = "";
+    public string CustomerName { get; set; } = string.Empty;
+    public string CustomerNic { get; set; } = string.Empty;
     public string Status { get; set; } = "";
     public DateTime CheckInDate { get; set; }
     public DateTime CheckOutDate { get; set; }

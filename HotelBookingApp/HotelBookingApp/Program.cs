@@ -1,4 +1,6 @@
 using HotelBookingApp.Services;
+using Microsoft.AspNetCore.Authentication.Cookies;
+
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -7,9 +9,18 @@ builder.Services.AddControllersWithViews();
 
 // 2. Add HttpClient to call API Gateway
 builder.Services.AddHttpClient("ApiClient", client =>
-{
-    client.BaseAddress = new Uri("https://localhost:6000"); // Gateway base URL
-});
+    {
+        client.BaseAddress = new Uri("https://localhost:6001");
+    })
+    .ConfigurePrimaryHttpMessageHandler(() =>
+    {
+        return new HttpClientHandler
+        {
+            // WARNING: ONLY for development/testing, bypass SSL cert validation
+            ServerCertificateCustomValidationCallback = HttpClientHandler.DangerousAcceptAnyServerCertificateValidator
+        };
+    });
+
 
 // 3. Add HttpContextAccessor & Session to store JWT
 builder.Services.AddHttpContextAccessor();
@@ -21,6 +32,12 @@ builder.Services.AddSession(options =>
     options.Cookie.IsEssential = true;
 });
 
+builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
+    .AddCookie(options =>
+    {
+        options.LoginPath = "/Login"; // where to redirect if not authenticated
+        options.AccessDeniedPath = "/AccessDenied"; // optional
+    });
 // 4. Add application services
 builder.Services.AddScoped<RoomService>();
 builder.Services.AddScoped<RequestService>();
@@ -45,6 +62,7 @@ app.UseStaticFiles(); // for CSS/JS
 
 app.UseRouting();
 app.UseSession();      // enable session for JWT storage
+app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllerRoute(

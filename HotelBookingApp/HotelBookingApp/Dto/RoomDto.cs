@@ -6,4 +6,5 @@ public class RoomDto
     public string RoomNumber { get; set; } = "";
     public int RoomTypeId { get; set; }
     public int HotelId { get; set; }
+    public bool IsAvailable { get; set; }
 }
