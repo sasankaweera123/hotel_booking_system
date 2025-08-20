@@ -1,11 +1,4 @@
-@model HotelBookingApp.Dto.RoomDto
-@inject HotelBookingApp.Services.RoomService RoomService
-
-@{
-    ViewBag.Title = "Edit Room";
-    var hotels = await RoomService.GetHotelsAsync();
-    var roomTypes = await RoomService.GetRoomTypesAsync();
-}
+@model EditRoomViewModel
 
 <div class="container mt-4">
     <h2>Edit Room</h2>
@@ -16,35 +9,26 @@
     }
 
     <form method="post" class="card p-3 shadow-sm">
-        <input type="hidden" asp-for="Id" />
+        <input type="hidden" asp-for="Room.Id" />
 
         <div class="mb-3">
             <label class="form-label">Room Number</label>
-            <input asp-for="RoomNumber" class="form-control" required />
+            <input asp-for="Room.RoomNumber" class="form-control" required />
         </div>
 
         <div class="mb-3">
             <label class="form-label">Room Type</label>
-            <select asp-for="RoomTypeId" class="form-select" required>
-                @foreach (var type in roomTypes)
-                {
-                    <option value="@type.Id" selected="@(type.Id == Model.RoomTypeId)">
-                        @type.Name
-                    </option>
-                }
-            </select>
+            <select asp-for="Room.RoomTypeId" class="form-select" asp-items="@(new SelectList(Model.RoomTypes, "Id", "Name", Model.Room.RoomTypeId))"></select>
         </div>
 
         <div class="mb-3">
             <label class="form-label">Hotel</label>
-            <select asp-for="HotelId" class="form-select" required>
-                @foreach (var hotel in hotels)
-                {
-                    <option value="@hotel.Id" selected="@(hotel.Id == Model.HotelId)">
-                        @hotel.Name
-                    </option>
-                }
-            </select>
+            <select asp-for="Room.HotelId" class="form-select" asp-items="@(new SelectList(Model.Hotels, "Id", "Name", Model.Room.HotelId))"></select>
+        </div>
+
+        <div class="mb-3 form-check">
+            <input asp-for="Room.IsAvailable" class="form-check-input" type="checkbox" />
+            <label class="form-check-label" asp-for="Room.IsAvailable">Available</label>
         </div>
 
         <button type="submit" class="btn btn-primary">Save Changes</button>

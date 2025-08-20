@@ -10,7 +10,7 @@ builder.Services.AddControllersWithViews();
 // 2. Add HttpClient to call API Gateway
 builder.Services.AddHttpClient("ApiClient", client =>
     {
-        client.BaseAddress = new Uri("https://localhost:6001");
+        client.BaseAddress = new Uri("https://localhost:6000");
     })
     .ConfigurePrimaryHttpMessageHandler(() =>
     {

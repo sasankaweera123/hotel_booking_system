@@ -65,10 +65,22 @@ public class BookingService
 
     public async Task<bool> UpdateBookingAsync(int id, BookingDto booking)
     {
+        Console.WriteLine($"Updating booking with ID {id}");
         var client = CreateClientWithAuth();
         var content = new StringContent(JsonSerializer.Serialize(booking), Encoding.UTF8, "application/json");
         var response = await client.PutAsync($"/booking/{id}", content);
-        return response.IsSuccessStatusCode;
+
+        if (response.IsSuccessStatusCode)
+        {
+            Console.WriteLine($"Successfully updated booking with ID {id}");
+            return true;
+        }
+        else
+        {
+            var error = await response.Content.ReadAsStringAsync();
+            Console.WriteLine($"Failed to update booking with ID {id}. Status: {response.StatusCode}, Error: {error}");
+            return false;
+        }
     }
 
     public async Task<bool> DeleteBookingAsync(int id)

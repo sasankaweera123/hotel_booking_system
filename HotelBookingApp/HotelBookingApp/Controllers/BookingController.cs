@@ -29,6 +29,8 @@ public class BookingController(BookingService bookingService, RoomService roomSe
         var viewModel = bookings.Select(b =>
         {
             var room = rooms.FirstOrDefault(r => r.Id == b.RoomId);
+            if (room == null)
+                Console.WriteLine($"Room not found for BookingId: {b.Id}, RoomId: {b.RoomId}");
             var hotel = hotels.FirstOrDefault(h => h.Id == b.HotelId);
             var roomTypeName = room != null
                 ? (roomTypes.FirstOrDefault(rt => rt.Id == room.RoomTypeId)?.Name ?? "Unknown")
@@ -60,15 +62,13 @@ public class BookingController(BookingService bookingService, RoomService roomSe
             Hotels = await roomService.GetHotelsAsync()
         };
 
-        // If logged in as Manager, auto-select their hotel
         if (User.IsInRole("Admin"))
         {
             var claim = User.Claims.FirstOrDefault(c => c.Type == "HotelId");
             if (claim != null)
             {
                 model.SelectedHotelId = int.Parse(claim.Value);
-                
-                model.Rooms = await roomService.GetAvailableRoomsByHotelAsync(model.SelectedHotelId.Value);
+                model.Rooms = await roomService.GetAvailableRoomsByHotelAsync(model.SelectedHotelId);
             }
         }
 
@@ -81,8 +81,8 @@ public class BookingController(BookingService bookingService, RoomService roomSe
         if (!ModelState.IsValid)
         {
             model.Hotels = await roomService.GetHotelsAsync();
-            if (model.SelectedHotelId.HasValue)
-                model.Rooms = await roomService.GetAvailableRoomsByHotelAsync(model.SelectedHotelId.Value);
+            if (model.SelectedHotelId != 0)
+                model.Rooms = await roomService.GetAvailableRoomsByHotelAsync(model.SelectedHotelId);
             return View(model);
         }
 
@@ -113,6 +113,7 @@ public class BookingController(BookingService bookingService, RoomService roomSe
 
         if (!ModelState.IsValid) return View(booking);
 
+        Console.WriteLine($"Booking ID: {booking.Id}, Hotel ID: {booking.HotelId}, Room ID: {booking.RoomId}");
         var success = await bookingService.UpdateBookingAsync(id, booking);
         if (success)
         {

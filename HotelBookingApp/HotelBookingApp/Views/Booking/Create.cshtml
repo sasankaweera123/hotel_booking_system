@@ -1,47 +1,74 @@
 @model BookingCreateViewModel
 
-<h2>Create Booking</h2>
+<div class="container mt-4">
+    <h2>Create Booking</h2>
 
-<form asp-action="Create" method="post">
-    @if (!User.IsInRole("Manager"))
-    {
+    <form asp-action="Create" method="post" class="card p-3 shadow-sm">
+        @if (!User.IsInRole("Manager"))
+        {
+            <div class="mb-3">
+                <label class="form-label">Hotel</label>
+                <select asp-for="SelectedHotelId" class="form-select" 
+                        asp-items="@(new SelectList(Model.Hotels, "Id", "Name"))">
+                    <option value="">-- Select a Hotel --</option>
+                </select>
+            </div>
+        }
+        else
+        {
+            <p><strong>Hotel:</strong> @Model.Hotels.FirstOrDefault(h => h.Id == Model.SelectedHotelId)?.Name</p>
+            <input type="hidden" asp-for="SelectedHotelId" />
+        }
+
         <div class="mb-3">
-            <label>Hotel</label>
-            <select asp-for="SelectedHotelId" class="form-select" 
-                    asp-items="@(new SelectList(Model.Hotels, "Id", "Name"))"></select>
+            <label class="form-label">Room</label>
+            <select asp-for="Booking.RoomId" class="form-select" required>
+                <option value="">-- Select a Room --</option>
+                @foreach (var room in Model.Rooms)
+                {
+                    <option value="@room.Id">
+                        Room @room.RoomNumber 
+                        (Type: @room.RoomTypeId, Hotel: @Model.Hotels.FirstOrDefault(h => h.Id == room.HotelId)?.Name)
+                    </option>
+                }
+            </select>
         </div>
-    }
-    else
-    {
-        <p><strong>Hotel:</strong> @Model.Hotels.FirstOrDefault(h => h.Id == Model.SelectedHotelId)?.Name</p>
-        <input type="hidden" asp-for="SelectedHotelId" />
-    }
 
-    <div class="mb-3">
-        <label>Room</label>
-        <select asp-for="Booking.RoomId" class="form-select" 
-                asp-items="@(new SelectList(Model.Rooms, "Id", "RoomTypeId"))"></select>
-    </div>
+        <div class="mb-3">
+            <label class="form-label">Customer Name</label>
+            <input asp-for="Booking.CustomerName" class="form-control" required />
+        </div>
 
-    <div class="mb-3">
-        <label>Customer Name</label>
-        <input asp-for="Booking.CustomerName" class="form-control" />
-    </div>
+        <div class="mb-3">
+            <label class="form-label">Customer NIC</label>
+            <input asp-for="Booking.CustomerNic" class="form-control" required />
+        </div>
 
-    <div class="mb-3">
-        <label>Customer NIC</label>
-        <input asp-for="Booking.CustomerNic" class="form-control" />
-    </div>
+        <div class="row mb-3">
+            <div class="col">
+                <label class="form-label">Check-In</label>
+                <input asp-for="Booking.CheckInDate" type="date" class="form-control" required min="@DateTime.Today.ToString("yyyy-MM-dd")" />
+            </div>
+            <div class="col">
+                <label class="form-label">Check-Out</label>
+                <input asp-for="Booking.CheckOutDate" type="date" class="form-control" required min="@DateTime.Today.ToString("yyyy-MM-dd")" />
+            </div>
+        </div>
 
-    <div class="mb-3">
-        <label>Check-In</label>
-        <input asp-for="Booking.CheckInDate" type="date" class="form-control" />
-    </div>
+        <div class="mb-3">
+            <label class="form-label">Status</label>
+            <select asp-for="Booking.Status" class="form-select">
+                <option value="Confirmed">Confirmed</option>
+                <option value="Cancelled">Cancelled</option>
+            </select>
+        </div>
 
-    <div class="mb-3">
-        <label>Check-Out</label>
-        <input asp-for="Booking.CheckOutDate" type="date" class="form-control" />
-    </div>
+        <div class="mb-3">
+            <label class="form-label">Special Request</label>
+            <input asp-for="Booking.SpecialRequest" class="form-control" />
+        </div>  
 
-    <button type="submit" class="btn btn-primary">Save</button>
-</form>
+        <button type="submit" class="btn btn-primary">Save</button>
+        <a asp-action="Index" class="btn btn-secondary">Cancel</a>
+    </form>
+</div>

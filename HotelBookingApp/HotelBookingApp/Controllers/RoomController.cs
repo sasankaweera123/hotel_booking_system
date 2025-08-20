@@ -62,24 +62,42 @@ namespace HotelBookingApp.Controllers;
         {
             var room = await _roomService.GetRoomByIdAsync(id);
             if (room == null) return NotFound();
-            return View(room);
+
+            var hotels = await _roomService.GetHotelsAsync();
+            var roomTypes = await _roomService.GetRoomTypesAsync();
+
+            var viewModel = new EditRoomViewModel
+            {
+                Room = room,
+                Hotels = hotels,
+                RoomTypes = roomTypes
+            };
+
+            return View(viewModel);
         }
 
-        // POST: /Room/Edit/5
+// POST: /Room/Edit/5
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(int id, RoomDto room)
+        public async Task<IActionResult> Edit(int id, EditRoomViewModel vm)
         {
-            if (id != room.Id) return BadRequest();
+            Console.WriteLine($"Edit Room: {id}, ModelState.IsValid: {ModelState.IsValid}");
+            if (id != vm.Room.Id) return BadRequest();
 
             if (ModelState.IsValid)
             {
-                var success = await _roomService.UpdateRoomAsync(id, room);
+                var success = await _roomService.UpdateRoomAsync(id, vm.Room);
                 if (success) return RedirectToAction(nameof(Index));
                 ViewBag.Error = "Failed to update room.";
             }
-            return View(room);
+
+            // Reload dropdowns if validation fails
+            vm.Hotels = await _roomService.GetHotelsAsync();
+            vm.RoomTypes = await _roomService.GetRoomTypesAsync();
+
+            return View(vm);
         }
+
 
         // GET: /Room/Delete/5
         public async Task<IActionResult> Delete(int id)

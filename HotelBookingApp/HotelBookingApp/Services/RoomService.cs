@@ -65,10 +65,22 @@ public class RoomService
 
     public async Task<bool> UpdateRoomAsync(int id, RoomDto room)
     {
+        Console.WriteLine($"Updating room with ID {id}");
         var client = CreateClientWithAuth();
         var content = new StringContent(JsonSerializer.Serialize(room), Encoding.UTF8, "application/json");
         var response = await client.PutAsync($"/hotel/room/{id}", content);
-        return response.IsSuccessStatusCode;
+    
+        if (response.IsSuccessStatusCode)
+        {
+            Console.WriteLine($"Successfully updated room with ID {id}");
+            return true;
+        }
+        else
+        {
+            var error = await response.Content.ReadAsStringAsync();
+            Console.WriteLine($"Failed to update room with ID {id}. Status: {response.StatusCode}, Error: {error}");
+            return false;
+        }
     }
 
     public async Task<bool> DeleteRoomAsync(int id)

@@ -4,7 +4,7 @@ namespace HotelBookingApp.Models;
 
 public class BookingCreateViewModel
 {
-    public int? SelectedHotelId { get; set; }
+    public int SelectedHotelId { get; set; }
     public List<HotelDto> Hotels { get; set; } = new();
     public List<RoomDto> Rooms { get; set; } = new();
 
