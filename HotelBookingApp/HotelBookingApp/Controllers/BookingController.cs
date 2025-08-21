@@ -237,7 +237,7 @@ public class BookingController(BookingService bookingService, RoomService roomSe
             return NotFound();
         }
 
-        return View(booking); // Must match Views/Booking/Delete.cshtml
+        return View(booking);
     }
 
     // POST: /Booking/Delete/5
