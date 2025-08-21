@@ -27,7 +27,7 @@
 
         <div class="mb-3">
             <label class="form-label">Hotel</label>
-            <select asp-for="HotelId" class="form-select" required>
+            <select asp-for="HotelId" class="form-select" required disabled>
                 @foreach (var hotel in hotels)
                 {
                     <option value="@hotel.Id" selected="@(hotel.Id == Model.HotelId)">
@@ -40,7 +40,7 @@
         <div class="mb-3">
             <label class="form-label">Room</label>
             <select asp-for="RoomId" class="form-select" required>
-                @foreach (var room in rooms)
+                @foreach (var room in rooms.Where(r => r.HotelId == Model.HotelId))
                 {
                     <option value="@room.Id" selected="@(room.Id == Model.RoomId)">
                         Room @room.RoomNumber (Hotel: @hotels.FirstOrDefault(h => h.Id == room.HotelId)?.Name)

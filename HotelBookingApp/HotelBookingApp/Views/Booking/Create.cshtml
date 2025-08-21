@@ -8,8 +8,8 @@
         {
             <div class="mb-3">
                 <label class="form-label">Hotel</label>
-                <select asp-for="SelectedHotelId" class="form-select" 
-                        asp-items="@(new SelectList(Model.Hotels, "Id", "Name"))">
+                <select asp-for="SelectedHotelId" class="form-select"
+                        asp-items="@(new SelectList(Model.Hotels, "Id", "Name"))" id="SelectedHotelId">
                     <option value="">-- Select a Hotel --</option>
                 </select>
             </div>
@@ -17,7 +17,7 @@
         else
         {
             <p><strong>Hotel:</strong> @Model.Hotels.FirstOrDefault(h => h.Id == Model.SelectedHotelId)?.Name</p>
-            <input type="hidden" asp-for="SelectedHotelId" />
+            <input type="hidden" asp-for="SelectedHotelId" id="SelectedHotelId" />
         }
 
         <div class="mb-3">
@@ -26,13 +26,14 @@
                 <option value="">-- Select a Room --</option>
                 @foreach (var room in Model.Rooms)
                 {
+                    var typeName = Model.RoomTypes.FirstOrDefault(rt => rt.Id == room.RoomTypeId)?.Name ?? "Unknown";
                     <option value="@room.Id">
-                        Room @room.RoomNumber 
-                        (Type: @room.RoomTypeId, Hotel: @Model.Hotels.FirstOrDefault(h => h.Id == room.HotelId)?.Name)
+                        Room @room.RoomNumber (Type: @typeName, Hotel: @Model.Hotels.FirstOrDefault(h => h.Id == room.HotelId)?.Name)
                     </option>
                 }
             </select>
         </div>
+
 
         <div class="mb-3">
             <label class="form-label">Customer Name</label>
@@ -66,9 +67,47 @@
         <div class="mb-3">
             <label class="form-label">Special Request</label>
             <input asp-for="Booking.SpecialRequest" class="form-control" />
-        </div>  
+        </div>
 
         <button type="submit" class="btn btn-primary">Save</button>
         <a asp-action="Index" class="btn btn-secondary">Cancel</a>
     </form>
 </div>
+
+@section Scripts {
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const hotelSelect = document.getElementById('SelectedHotelId');
+    const roomSelect  = document.getElementById('Booking_RoomId');
+
+    async function loadRooms(hotelId) {
+        roomSelect.innerHTML = '<option value="">-- Select a Room --</option>';
+        if (!hotelId) return;
+
+        const url = '@Url.Action("RoomsForHotel", "Booking")' + '?hotelId=' + encodeURIComponent(hotelId);
+        const resp = await fetch(url, { headers: { 'X-Requested-With': 'XMLHttpRequest' } });
+        if (!resp.ok) return;
+
+        const rooms = await resp.json();
+        rooms.forEach(r => {
+            const opt = document.createElement('option');
+            opt.value = r.id;
+            opt.textContent = `Room ${r.roomNumber} (Type: ${r.roomTypeName})`;
+            roomSelect.appendChild(opt);
+        });
+    }
+
+    // Load rooms when hotel changes
+    if (hotelSelect) {
+        hotelSelect.addEventListener('change', function () {
+            loadRooms(this.value);
+        });
+
+        // If there is a preselected hotel (e.g., Manager), load its rooms on page load
+        if (hotelSelect.value) {
+            loadRooms(hotelSelect.value);
+        }
+    }
+});
+</script>
+}

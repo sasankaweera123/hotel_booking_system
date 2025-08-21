@@ -1,25 +1,29 @@
 using HotelBookingApp.Dto;
+using HotelBookingApp.Models.Utils;
 using HotelBookingApp.Services;
 using Microsoft.AspNetCore.Mvc;
 
 namespace HotelBookingApp.Controllers;
 
-public class ReportController : Controller
+public class ReportController(ReportService reportService, LogQueue logQueue) : Controller
 {
-    private readonly ReportService _reportService;
-
-    public ReportController(ReportService reportService)
-    {
-        _reportService = reportService;
-    }
-
     [HttpGet]
     public IActionResult Index()
     {
+        logQueue.Queue.Enqueue(new LogMessage
+        {
+            Level = "INFO",
+            Message = "User accessed Report Index page"
+        });
         var token = HttpContext.Session.GetString("jwtToken");
         if (string.IsNullOrEmpty(token))
             return RedirectToAction("Index", "Login");
 
+        logQueue.Queue.Enqueue(new LogMessage
+        {
+            Level = "INFO",
+            Message = "Report Index page loaded successfully"
+        });
         return View(new List<ReportDto>()); // Empty list initially
     }
 
@@ -30,9 +34,27 @@ public class ReportController : Controller
         if (string.IsNullOrEmpty(token))
             return RedirectToAction("Index", "Login");
 
-        var reports = await _reportService.GetBookingSummaryAsync(fromDate, toDate);
+        
+        logQueue.Queue.Enqueue(new LogMessage
+        {
+            Level = "INFO",
+            Message = $"Generating booking summary report from {fromDate:yyyy-MM-dd} to {toDate:yyyy-MM-dd}"
+        });
+        
+        if (fromDate > toDate)
+        {
+            ModelState.AddModelError("", "From date cannot be later than To date.");
+            return View("Index", new List<ReportDto>());
+        }
+        var reports = await reportService.GetBookingSummaryAsync(fromDate, toDate);
         ViewBag.FromDate = fromDate.ToString("yyyy-MM-dd");
         ViewBag.ToDate = toDate.ToString("yyyy-MM-dd");
+        
+        logQueue.Queue.Enqueue(new LogMessage
+        {
+            Level = "INFO",
+            Message = $"Booking summary report generated with {reports.Count} entries"
+        });
 
         return View("Index", reports);
     }

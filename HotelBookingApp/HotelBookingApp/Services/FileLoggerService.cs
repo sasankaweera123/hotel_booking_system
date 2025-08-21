@@ -11,7 +11,7 @@ public class FileLoggerService : BackgroundService
     public FileLoggerService(LogQueue logQueue)
     {
         _logQueue = logQueue;
-        _logDirectory = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "ClientLogs");
+        _logDirectory = Path.Combine(@"C:\", "ClientLogs");
         Directory.CreateDirectory(_logDirectory);
 
         _logFile = Path.Combine(_logDirectory, $"client-log-{DateTime.Now:yyyyMMdd}.txt");

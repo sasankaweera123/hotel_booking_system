@@ -120,5 +120,15 @@ public class RoomService
         var rooms = await client.GetFromJsonAsync<List<RoomDto>>($"/hotel/room/by-hotel/{hotelId}");
         return rooms?.Where(r => r.IsAvailable).ToList() ?? new List<RoomDto>();
     }
+    
+    public async Task<bool> SetRoomAvailabilityAsync(int roomId, bool isAvailable)
+    {
+        var room = await GetRoomByIdAsync(roomId);
+        if (room == null)
+            return false;
+
+        room.IsAvailable = isAvailable;
+        return await UpdateRoomAsync(roomId, room);
+    }
 
 }

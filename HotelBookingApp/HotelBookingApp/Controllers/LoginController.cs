@@ -1,17 +1,11 @@
+using HotelBookingApp.Models.Utils;
 using HotelBookingApp.Services;
 using Microsoft.AspNetCore.Mvc;
 
 namespace HotelBookingApp.Controllers;
 
-public class LoginController: Controller
+public class LoginController(AuthService authService, LogQueue logQueue) : Controller
 {
-    private readonly AuthService _authService;
-
-    public LoginController(AuthService authService)
-    {
-        _authService = authService;
-    }
-
     [HttpGet]
     public IActionResult Index()
     {
@@ -21,11 +15,22 @@ public class LoginController: Controller
     [HttpPost]
     public async Task<IActionResult> Index(string username, string password)
     {
-        bool loggedIn = await _authService.LoginAsync(username, password);
+        var loggedIn = await authService.LoginAsync(username, password);
         if (loggedIn)
         {
+            logQueue.Queue.Enqueue(new LogMessage
+            {
+                Level = "INFO",
+                Message = "User logged in successfully",
+            });
             return RedirectToAction("Index", "Home");
         }
+        
+        logQueue.Queue.Enqueue(new LogMessage
+        {
+            Level = "ERROR",
+            Message = "Login failed for user: " + username,
+        });
 
         ViewBag.Error = "Invalid username or password";
         return View();
@@ -40,13 +45,23 @@ public class LoginController: Controller
     [HttpPost]
     public async Task<IActionResult> Register(string username, string password, string role)
     {
-        bool registered = await _authService.RegisterAsync(username, password, role);
+        var registered = await authService.RegisterAsync(username, password, role);
 
         if (registered)
         {
-            // After registration, redirect to login
+            logQueue.Queue.Enqueue(new LogMessage
+            {
+                Level = "INFO",
+                Message = "User registered successfully: " + username,
+            });
             return RedirectToAction("Index", "Login");
         }
+        
+        logQueue.Queue.Enqueue(new LogMessage
+        {
+            Level = "ERROR",
+            Message = "Registration failed for user: " + username,
+        });
 
         ViewBag.Error = "Registration failed. Try a different username.";
         return View();
@@ -55,7 +70,12 @@ public class LoginController: Controller
     [HttpGet]
     public IActionResult Logout()
     {
-        _authService.Logout();
+        logQueue.Queue.Enqueue(new LogMessage
+        {
+            Level = "INFO",
+            Message = "User logged out successfully",
+        });
+        authService.Logout();
         return RedirectToAction("Index");
     }
 }

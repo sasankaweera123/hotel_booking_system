@@ -30,7 +30,11 @@ public class BookingController(BookingService bookingService, RoomService roomSe
         {
             var room = rooms.FirstOrDefault(r => r.Id == b.RoomId);
             if (room == null)
-                Console.WriteLine($"Room not found for BookingId: {b.Id}, RoomId: {b.RoomId}");
+                logQueue.Queue.Enqueue(new LogMessage
+                {
+                    Level = "WARN",
+                    Message = $"Room not found for BookingId: {b.Id}, RoomId: {b.RoomId}"
+                });
             var hotel = hotels.FirstOrDefault(h => h.Id == b.HotelId);
             var roomTypeName = room != null
                 ? (roomTypes.FirstOrDefault(rt => rt.Id == room.RoomTypeId)?.Name ?? "Unknown")
@@ -59,34 +63,91 @@ public class BookingController(BookingService bookingService, RoomService roomSe
     {
         var model = new BookingCreateViewModel
         {
-            Hotels = await roomService.GetHotelsAsync()
+            Hotels = await roomService.GetHotelsAsync(),
+            RoomTypes = await roomService.GetRoomTypesAsync()
         };
 
-        if (User.IsInRole("Admin"))
+        if (!User.IsInRole("Admin")) return View(model);
+        
+        logQueue.Queue.Enqueue(new LogMessage
         {
-            var claim = User.Claims.FirstOrDefault(c => c.Type == "HotelId");
-            if (claim != null)
-            {
-                model.SelectedHotelId = int.Parse(claim.Value);
-                model.Rooms = await roomService.GetAvailableRoomsByHotelAsync(model.SelectedHotelId);
-            }
-        }
+            Level = "INFO",
+            Message = "Admin user accessed Booking Create page"
+        });
+        
+        var claim = User.Claims.FirstOrDefault(c => c.Type == "HotelId");
+        if (claim == null) return View(model);
+        model.SelectedHotelId = int.Parse(claim.Value);
+        
+        logQueue.Queue.Enqueue(new LogMessage
+        {
+            Level = "INFO",
+            Message = $"Admin user selected HotelId: {model.SelectedHotelId}"
+        });
+        
+        model.Rooms = await roomService.GetAvailableRoomsByHotelAsync(model.SelectedHotelId);
 
         return View(model);
     }
+    
+    // GET /Booking/RoomsForHotel?hotelId=1
+    [HttpGet]
+    public async Task<IActionResult> RoomsForHotel(int hotelId)
+    {
+        var rooms = await roomService.GetAvailableRoomsByHotelAsync(hotelId);
+        var roomTypes = await roomService.GetRoomTypesAsync();
+        
+        var payload = rooms.Select(r => new {
+            id = r.Id,
+            roomNumber = r.RoomNumber,
+            roomTypeName = roomTypes.FirstOrDefault(rt => rt.Id == r.RoomTypeId)?.Name ?? "Unknown"
+        });
+        
+        logQueue.Queue.Enqueue(new LogMessage
+        {
+            Level = "INFO",
+            Message = $"Fetched {rooms.Count} rooms for HotelId: {hotelId}"
+        });
+
+        return Json(payload);
+    }
+
 
     [HttpPost]
     public async Task<IActionResult> Create(BookingCreateViewModel model)
     {
         if (!ModelState.IsValid)
         {
+            
+            logQueue.Queue.Enqueue(new LogMessage
+            {
+                Level = "ERROR",
+                Message = "Model state is invalid during booking creation"
+            });
+            
             model.Hotels = await roomService.GetHotelsAsync();
             if (model.SelectedHotelId != 0)
                 model.Rooms = await roomService.GetAvailableRoomsByHotelAsync(model.SelectedHotelId);
             return View(model);
         }
-
+        model.Booking.HotelId = model.SelectedHotelId;
+        Console.WriteLine($"Creating booking for HotelId: {model.Booking.HotelId}, RoomId: {model.Booking.RoomId}");
         await bookingService.CreateBookingAsync(model.Booking);
+        
+        logQueue.Queue.Enqueue(new LogMessage
+        {
+            Level = "INFO",
+            Message = $"Booking created successfully for HotelId: {model.Booking.HotelId}, RoomId: {model.Booking.RoomId}"
+        });
+        
+        await roomService.SetRoomAvailabilityAsync(model.Booking.RoomId, false);
+        
+        logQueue.Queue.Enqueue(new LogMessage
+        {
+            Level = "INFO",
+            Message = $"RoomId: {model.Booking.RoomId} set to unavailable after booking creation"
+        });
+        
         return RedirectToAction(nameof(Index));
     }
 
@@ -97,6 +158,12 @@ public class BookingController(BookingService bookingService, RoomService roomSe
         var token = HttpContext.Session.GetString("jwtToken");
         if (string.IsNullOrEmpty(token))
             return RedirectToAction("Index", "Login");
+
+        logQueue.Queue.Enqueue(new LogMessage
+        {
+            Level = "INFO",
+            Message = $"User accessed Booking Edit page for BookingId: {id}"
+        });
 
         var booking = await bookingService.GetBookingByIdAsync(id);
         if (booking == null) return NotFound();
@@ -110,6 +177,12 @@ public class BookingController(BookingService bookingService, RoomService roomSe
     public async Task<IActionResult> Edit(int id, BookingDto booking)
     {
         if (id != booking.Id) return BadRequest();
+        
+        logQueue.Queue.Enqueue(new LogMessage
+        {
+            Level = "INFO",
+            Message = $"Attempting to update BookingId: {id}"
+        });
 
         if (!ModelState.IsValid) return View(booking);
 
@@ -117,9 +190,22 @@ public class BookingController(BookingService bookingService, RoomService roomSe
         var success = await bookingService.UpdateBookingAsync(id, booking);
         if (success)
         {
+            
+            logQueue.Queue.Enqueue(new LogMessage
+            {
+                Level = "INFO",
+                Message = $"Booking updated successfully for BookingId: {id}"
+            });
+            
             TempData["Success"] = "Booking updated successfully!";
             return RedirectToAction(nameof(Index));
         }
+        
+        logQueue.Queue.Enqueue(new LogMessage
+        {
+            Level = "ERROR",
+            Message = $"Failed to update BookingId: {id}"
+        });
 
         ViewBag.Error = "Failed to update booking.";
 
@@ -133,8 +219,23 @@ public class BookingController(BookingService bookingService, RoomService roomSe
         if (string.IsNullOrEmpty(token))
             return RedirectToAction("Index", "Login");
 
+        logQueue.Queue.Enqueue(new LogMessage
+        {
+            Level = "INFO",
+            Message = $"User accessed Booking Delete page for BookingId: {id}"
+        });
+
         var booking = await bookingService.GetBookingByIdAsync(id);
-        if (booking == null) return NotFound();
+        
+        if (booking == null)
+        {
+            logQueue.Queue.Enqueue(new LogMessage
+            {
+                Level = "WARN",
+                Message = $"Booking not found for BookingId: {id}"
+            });
+            return NotFound();
+        }
 
         return View(booking); // Must match Views/Booking/Delete.cshtml
     }
@@ -144,11 +245,40 @@ public class BookingController(BookingService bookingService, RoomService roomSe
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> DeleteConfirmed(int id)
     {
+        // Fetch the booking to get the RoomId
+        var booking = await bookingService.GetBookingByIdAsync(id);
+        if (booking == null)
+        {
+            logQueue.Queue.Enqueue(new LogMessage
+            {
+                Level = "WARN",
+                Message = $"Booking not found for BookingId: {id} during deletion"
+            });
+            TempData["Success"] = "Booking not found.";
+            return RedirectToAction(nameof(Index));
+        }
+
         var success = await bookingService.DeleteBookingAsync(id);
 
-        TempData["Success"] = success
-            ? "Booking deleted successfully!"
-            : "Failed to delete booking.";
+        if (success)
+        {
+            logQueue.Queue.Enqueue(new LogMessage
+            {
+                Level = "INFO",
+                Message = $"Booking deleted successfully for BookingId: {id}"
+            });
+            await roomService.SetRoomAvailabilityAsync(booking.RoomId, true);
+            TempData["Success"] = "Booking deleted successfully!";
+        }
+        else
+        {
+            logQueue.Queue.Enqueue(new LogMessage
+            {
+                Level = "ERROR",
+                Message = $"Failed to delete BookingId: {id}"
+            });
+            TempData["Success"] = "Failed to delete booking.";
+        }
 
         return RedirectToAction(nameof(Index));
     }

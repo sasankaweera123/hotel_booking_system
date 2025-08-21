@@ -60,7 +60,18 @@ public class BookingService
         var client = CreateClientWithAuth();
         var content = new StringContent(JsonSerializer.Serialize(booking), Encoding.UTF8, "application/json");
         var response = await client.PostAsync("/booking", content);
-        return response.IsSuccessStatusCode;
+
+        if (response.IsSuccessStatusCode)
+        {
+            Console.WriteLine("Booking created successfully.");
+            return true;
+        }
+        else
+        {
+            var error = await response.Content.ReadAsStringAsync();
+            Console.WriteLine($"Failed to create booking. Status: {response.StatusCode}, Error: {error}");
+            return false;
+        }
     }
 
     public async Task<bool> UpdateBookingAsync(int id, BookingDto booking)
