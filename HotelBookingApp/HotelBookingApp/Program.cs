@@ -10,7 +10,9 @@ builder.Services.AddControllersWithViews();
 // 2. Add HttpClient to call API Gateway
 builder.Services.AddHttpClient("ApiClient", client =>
     {
-        client.BaseAddress = new Uri("https://localhost:6000");
+        var dev = "https://localhost:6000";
+        var prod = "https://hotelapp.hivesphere.world";
+        client.BaseAddress = new Uri(prod);
     })
     .ConfigurePrimaryHttpMessageHandler(() =>
     {
