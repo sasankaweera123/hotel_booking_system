@@ -11,6 +11,7 @@ builder.Services.AddControllersWithViews();
 builder.Services.AddHttpClient("ApiClient", client =>
     {
         var dev = "https://localhost:6000";
+        var uat = "https://apigateway.yellowbush-c4c8fa1c.canadacentral.azurecontainerapps.io";
         var prod = "https://hotelapp.hivesphere.world";
         client.BaseAddress = new Uri(prod);
     })
