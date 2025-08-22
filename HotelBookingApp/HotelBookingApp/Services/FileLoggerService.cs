@@ -11,6 +11,8 @@ public class FileLoggerService : BackgroundService
     public FileLoggerService(LogQueue logQueue)
     {
         _logQueue = logQueue;
+        // var baseDir = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
+        // _logDirectory = Path.Combine(baseDir, "ClientLogs");
         _logDirectory = Path.Combine(@"C:\", "ClientLogs");
         Directory.CreateDirectory(_logDirectory);
 
